@@ -1,5 +1,5 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, act } from '@testing-library/react'
 import {
@@ -10,7 +10,7 @@ import {
   DataSheetGridRef,
 } from '../src'
 
-jest.mock('react-resize-detector', () => ({
+vi.mock('react-resize-detector', () => ({
   useResizeDetector: () => ({ width: 100, height: 100 }),
 }))
 
@@ -19,9 +19,9 @@ const columns: Column[] = [
   keyColumn('lastName', textColumn),
 ]
 
-test('Backspace to delete cell', () => {
+test('Backspace to delete cell', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -37,7 +37,7 @@ test('Backspace to delete cell', () => {
 
   act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
 
-  userEvent.keyboard('[Backspace]')
+  await userEvent.keyboard('[Backspace]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -48,9 +48,9 @@ test('Backspace to delete cell', () => {
   )
 })
 
-test('Delete to delete cell', () => {
+test('Delete to delete cell', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -66,7 +66,7 @@ test('Delete to delete cell', () => {
 
   act(() => ref.current.setActiveCell({ col: 1, row: 1 }))
 
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -77,9 +77,9 @@ test('Delete to delete cell', () => {
   )
 })
 
-test('Delete selection', () => {
+test('Delete selection', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -100,7 +100,7 @@ test('Delete selection', () => {
     })
   )
 
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -111,9 +111,9 @@ test('Delete selection', () => {
   )
 })
 
-test('Delete entire grid', () => {
+test('Delete entire grid', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -134,7 +134,7 @@ test('Delete entire grid', () => {
     })
   )
 
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -145,9 +145,9 @@ test('Delete entire grid', () => {
   )
 })
 
-test('Delete disabled cells', () => {
+test('Delete disabled cells', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -171,7 +171,7 @@ test('Delete disabled cells', () => {
     })
   )
 
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -182,9 +182,9 @@ test('Delete disabled cells', () => {
   )
 })
 
-test('Delete partially empty selection', () => {
+test('Delete partially empty selection', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -205,7 +205,7 @@ test('Delete partially empty selection', () => {
     })
   )
 
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -228,9 +228,9 @@ test('Delete partially empty selection', () => {
   })
 })
 
-test('Delete empty selection', () => {
+test('Delete empty selection', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -251,7 +251,7 @@ test('Delete empty selection', () => {
     })
   )
 
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).not.toHaveBeenCalled()
   expect(ref.current.selection).toEqual({
@@ -268,9 +268,9 @@ test('Delete empty selection', () => {
   })
 })
 
-test('Delete empty cell', () => {
+test('Delete empty cell', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -285,7 +285,7 @@ test('Delete empty cell', () => {
   )
 
   act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).not.toHaveBeenCalled()
   expect(ref.current.selection).toEqual({
@@ -302,9 +302,9 @@ test('Delete empty cell', () => {
   })
 })
 
-test('Delete empty row', () => {
+test('Delete empty row', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -316,7 +316,7 @@ test('Delete empty row', () => {
   )
 
   act(() => ref.current.setActiveCell({ col: 1, row: 1 }))
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).toHaveBeenCalledWith(
     [{ firstName: 'Elon', lastName: 'Musk' }],
@@ -329,9 +329,9 @@ test('Delete empty row', () => {
   })
 })
 
-test('Delete empty rows', () => {
+test('Delete empty rows', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -354,7 +354,7 @@ test('Delete empty rows', () => {
       },
     })
   )
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).toHaveBeenCalledWith(
     [],
@@ -363,9 +363,9 @@ test('Delete empty rows', () => {
   expect(ref.current.activeCell).toEqual(null)
 })
 
-test('Delete empty locked rows', () => {
+test('Delete empty locked rows', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -389,7 +389,7 @@ test('Delete empty locked rows', () => {
       },
     })
   )
-  userEvent.keyboard('[Delete]')
+  await userEvent.keyboard('[Delete]')
 
   expect(onChange).not.toHaveBeenCalled()
 })

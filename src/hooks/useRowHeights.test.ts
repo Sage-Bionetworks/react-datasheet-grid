@@ -1,12 +1,13 @@
 import { useRef, useState, useMemo } from 'react'
+import { test, expect, describe, beforeEach, vi } from 'vitest'
 import { useRowHeights } from './useRowHeights'
-jest.mock('react')
+vi.mock('react')
 
-const useRefMock = useRef as unknown as jest.Mock<{
+const useRefMock = useRef as unknown as vi.Mock<{
   current: { height: number; top: number }[]
 }>
-const useStateMock = useState as unknown as jest.Mock
-const useMemoMock = useMemo as unknown as jest.Mock
+const useStateMock = useState as unknown as vi.Mock
+const useMemoMock = useMemo as unknown as vi.Mock
 
 const createSizes = (...heights: number[]) => {
   let bottom = 0

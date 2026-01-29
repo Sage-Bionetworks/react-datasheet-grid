@@ -1,5 +1,5 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, screen, act } from '@testing-library/react'
 import {
@@ -10,7 +10,7 @@ import {
   DataSheetGridRef,
 } from '../src'
 
-jest.mock('react-resize-detector', () => ({
+vi.mock('react-resize-detector', () => ({
   useResizeDetector: () => ({ width: 100, height: 100 }),
 }))
 
@@ -23,7 +23,7 @@ const columns: Column[] = [
   keyColumn('lastName', textColumn),
 ]
 
-test('Tab from outside', () => {
+test('Tab from outside', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(
     <>
@@ -33,9 +33,9 @@ test('Tab from outside', () => {
     </>
   )
 
-  userEvent.click(screen.getByTestId('input-before'))
+  await userEvent.click(screen.getByTestId('input-before'))
 
-  userEvent.tab()
+  await userEvent.tab()
   expect(ref.current.activeCell).toEqual({
     col: 0,
     colId: 'firstName',
@@ -43,13 +43,13 @@ test('Tab from outside', () => {
   })
 })
 
-test('Tab from cell', () => {
+test('Tab from cell', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} lockRows />)
 
   act(() => ref.current.setActiveCell({ col: 0, row: 1 }))
 
-  userEvent.tab()
+  await userEvent.tab()
   expect(ref.current.activeCell).toEqual({
     col: 1,
     colId: 'lastName',
@@ -57,13 +57,13 @@ test('Tab from cell', () => {
   })
 })
 
-test('Tab from last cell of row', () => {
+test('Tab from last cell of row', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} lockRows />)
 
   act(() => ref.current.setActiveCell({ col: 1, row: 0 }))
 
-  userEvent.tab()
+  await userEvent.tab()
   expect(ref.current.activeCell).toEqual({
     col: 0,
     colId: 'firstName',
@@ -71,7 +71,7 @@ test('Tab from last cell of row', () => {
   })
 })
 
-test('Tab from last cell of last row', () => {
+test('Tab from last cell of last row', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(
     <>
@@ -83,12 +83,12 @@ test('Tab from last cell of last row', () => {
 
   act(() => ref.current.setActiveCell({ col: 1, row: 1 }))
 
-  userEvent.tab()
+  await userEvent.tab()
   expect(ref.current.activeCell).toEqual(null)
   expect(screen.getByTestId('input-after')).toHaveFocus()
 })
 
-test('Shift tab from outside', () => {
+test('Shift tab from outside', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(
     <>
@@ -98,9 +98,9 @@ test('Shift tab from outside', () => {
     </>
   )
 
-  userEvent.click(screen.getByTestId('input-after'))
+  await userEvent.click(screen.getByTestId('input-after'))
 
-  userEvent.tab({ shift: true })
+  await userEvent.tab({ shift: true })
   expect(ref.current.activeCell).toEqual({
     col: 1,
     colId: 'lastName',
@@ -108,7 +108,7 @@ test('Shift tab from outside', () => {
   })
 })
 
-test('Shift tab from cell', () => {
+test('Shift tab from cell', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(
     <>
@@ -120,7 +120,7 @@ test('Shift tab from cell', () => {
 
   act(() => ref.current.setActiveCell({ col: 1, row: 1 }))
 
-  userEvent.tab({ shift: true })
+  await userEvent.tab({ shift: true })
   expect(ref.current.activeCell).toEqual({
     col: 0,
     colId: 'firstName',
@@ -128,7 +128,7 @@ test('Shift tab from cell', () => {
   })
 })
 
-test('Shift tab from first cell of row', () => {
+test('Shift tab from first cell of row', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(
     <>
@@ -140,7 +140,7 @@ test('Shift tab from first cell of row', () => {
 
   act(() => ref.current.setActiveCell({ col: 0, row: 1 }))
 
-  userEvent.tab({ shift: true })
+  await userEvent.tab({ shift: true })
   expect(ref.current.activeCell).toEqual({
     col: 1,
     colId: 'lastName',
@@ -148,7 +148,7 @@ test('Shift tab from first cell of row', () => {
   })
 })
 
-test('Shift tab from first cell of first row', () => {
+test('Shift tab from first cell of first row', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(
     <>
@@ -160,7 +160,7 @@ test('Shift tab from first cell of first row', () => {
 
   act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
 
-  userEvent.tab({ shift: true })
+  await userEvent.tab({ shift: true })
   expect(ref.current.activeCell).toEqual(null)
   expect(screen.getByTestId('input-before')).toHaveFocus()
 })

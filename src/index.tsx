@@ -11,6 +11,7 @@ import {
 } from './types'
 import { DataSheetGrid as DataSheetGridBase } from './components/DataSheetGrid'
 import { StaticDataSheetGrid as StaticDataSheetGridBase } from './components/StaticDataSheetGrid'
+import './style.css'
 
 export type Column<T = any, C = any, PasteValue = string> = Partial<
   ColumnBase<T, C, PasteValue>
@@ -38,3 +39,4 @@ export {
   createContextMenuComponent,
   defaultRenderItem as renderContextMenuItem,
 } from './components/ContextMenu'
+export * from './types';

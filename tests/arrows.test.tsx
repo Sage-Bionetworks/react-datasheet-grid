@@ -1,5 +1,5 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, act } from '@testing-library/react'
 import {
@@ -11,7 +11,7 @@ import {
   checkboxColumn,
 } from '../src'
 
-jest.mock('react-resize-detector', () => ({
+vi.mock('react-resize-detector', () => ({
   useResizeDetector: () => ({ width: 100, height: 100 }),
 }))
 
@@ -26,13 +26,13 @@ const columns: Column[] = [
   keyColumn('lastName', textColumn),
 ]
 
-test('Up from cell', () => {
+test('Up from cell', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
   act(() => ref.current.setActiveCell({ col: 1, row: 1 }))
 
-  userEvent.keyboard('[ArrowUp]')
+  await userEvent.keyboard('[ArrowUp]')
   expect(ref.current.activeCell).toEqual({
     col: 1,
     colId: 'firstName',
@@ -40,13 +40,13 @@ test('Up from cell', () => {
   })
 })
 
-test('Up from top row', () => {
+test('Up from top row', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
   act(() => ref.current.setActiveCell({ col: 1, row: 0 }))
 
-  userEvent.keyboard('[ArrowUp]')
+  await userEvent.keyboard('[ArrowUp]')
   expect(ref.current.activeCell).toEqual({
     col: 1,
     colId: 'firstName',
@@ -54,7 +54,7 @@ test('Up from top row', () => {
   })
 })
 
-test('Up from selection', () => {
+test('Up from selection', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
@@ -71,7 +71,7 @@ test('Up from selection', () => {
     })
   )
 
-  userEvent.keyboard('[ArrowUp]')
+  await userEvent.keyboard('[ArrowUp]')
   expect(ref.current.selection).toEqual({
     max: {
       col: 1,
@@ -86,13 +86,13 @@ test('Up from selection', () => {
   })
 })
 
-test('Cmd + Up', () => {
+test('Cmd + Up', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
   act(() => ref.current.setActiveCell({ col: 1, row: 2 }))
 
-  userEvent.keyboard('[MetaLeft>][ArrowUp][/MetaLeft]')
+  await userEvent.keyboard('[MetaLeft>][ArrowUp][/MetaLeft]')
   expect(ref.current.activeCell).toEqual({
     col: 1,
     colId: 'firstName',
@@ -100,13 +100,13 @@ test('Cmd + Up', () => {
   })
 })
 
-test('Ctrl + Up', () => {
+test('Ctrl + Up', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
   act(() => ref.current.setActiveCell({ col: 1, row: 2 }))
 
-  userEvent.keyboard('[ControlLeft>][ArrowUp][/ControlLeft]')
+  await userEvent.keyboard('[ControlLeft>][ArrowUp][/ControlLeft]')
   expect(ref.current.activeCell).toEqual({
     col: 1,
     colId: 'firstName',
@@ -114,13 +114,13 @@ test('Ctrl + Up', () => {
   })
 })
 
-test('Shift + Up', () => {
+test('Shift + Up', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
   act(() => ref.current.setActiveCell({ col: 1, row: 2 }))
 
-  userEvent.keyboard('[ShiftLeft>][ArrowUp][/ShiftLeft]')
+  await userEvent.keyboard('[ShiftLeft>][ArrowUp][/ShiftLeft]')
   expect(ref.current.selection).toEqual({
     min: {
       col: 1,
@@ -135,7 +135,7 @@ test('Shift + Up', () => {
   })
 })
 
-test('Shift + Up from selection', () => {
+test('Shift + Up from selection', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
@@ -146,7 +146,7 @@ test('Shift + Up from selection', () => {
     })
   )
 
-  userEvent.keyboard('[ShiftLeft>][ArrowUp][/ShiftLeft]')
+  await userEvent.keyboard('[ShiftLeft>][ArrowUp][/ShiftLeft]')
   expect(ref.current.selection).toEqual({
     min: {
       col: 1,
@@ -161,7 +161,7 @@ test('Shift + Up from selection', () => {
   })
 })
 
-test('Shift + Up from selection already at the top', () => {
+test('Shift + Up from selection already at the top', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
@@ -172,7 +172,7 @@ test('Shift + Up from selection already at the top', () => {
     })
   )
 
-  userEvent.keyboard('[ShiftLeft>][ArrowUp][/ShiftLeft]')
+  await userEvent.keyboard('[ShiftLeft>][ArrowUp][/ShiftLeft]')
   expect(ref.current.selection).toEqual({
     min: {
       col: 1,

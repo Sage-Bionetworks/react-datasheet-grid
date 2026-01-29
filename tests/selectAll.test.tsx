@@ -1,5 +1,5 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, screen, act } from '@testing-library/react'
 import {
@@ -10,7 +10,7 @@ import {
   DataSheetGridRef,
 } from '../src'
 
-jest.mock('react-resize-detector', () => ({
+vi.mock('react-resize-detector', () => ({
   useResizeDetector: () => ({ width: 100, height: 100 }),
 }))
 
@@ -23,13 +23,13 @@ const columns: Column[] = [
   keyColumn('lastName', textColumn),
 ]
 
-test('Select all with Cmd+A', () => {
+test('Select all with Cmd+A', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
   act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
 
-  userEvent.keyboard('[MetaLeft>]a[/MetaLeft]')
+  await userEvent.keyboard('[MetaLeft>]a[/MetaLeft]')
   expect(ref.current.selection).toEqual({
     min: {
       col: 0,
@@ -44,13 +44,13 @@ test('Select all with Cmd+A', () => {
   })
 })
 
-test('Select all with Ctrl+A', () => {
+test('Select all with Ctrl+A', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
   render(<DataSheetGrid value={data} columns={columns} ref={ref} />)
 
   act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
 
-  userEvent.keyboard('[ControlLeft>]a[/ControlLeft]')
+  await userEvent.keyboard('[ControlLeft>]a[/ControlLeft]')
   expect(ref.current.selection).toEqual({
     min: {
       col: 0,

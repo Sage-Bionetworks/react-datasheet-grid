@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "incremental": true,
+    "incremental": false,
     "target": "ES2015",
-    "module": "commonjs",
+    "module": "ESNext",
     "allowJs": false,
     "jsx": "react",
     "declaration": true,
@@ -22,6 +22,7 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
     "forceConsistentCasingInFileNames": true
   },
   "exclude": [

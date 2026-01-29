@@ -1,3 +1,4 @@
+import { test, expect, describe, vi } from 'vitest'
 import {
   parseTextPlainData,
   parseTextHtmlData,
@@ -6,7 +7,7 @@ import {
 } from './copyPasting'
 import { JSDOM } from 'jsdom'
 
-jest.mock('./domParser', () => ({
+vi.mock('./domParser', () => ({
   parseDom: (html: string) => {
     const dom = new JSDOM(html)
     return dom.window.document

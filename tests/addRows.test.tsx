@@ -1,7 +1,7 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import {
   DataSheetGrid,
   Column,
@@ -10,7 +10,7 @@ import {
   DataSheetGridRef,
 } from '../src'
 
-jest.mock('react-resize-detector', () => ({
+vi.mock('react-resize-detector', () => ({
   useResizeDetector: () => ({ width: 100, height: 100 }),
 }))
 
@@ -21,7 +21,7 @@ const columns: Column[] = [
 
 test('Add single row', () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -31,7 +31,7 @@ test('Add single row', () => {
       ]}
       onChange={onChange}
       columns={columns}
-      createRow={jest.fn().mockReturnValueOnce({ id: 3 })}
+      createRow={vi.fn().mockReturnValueOnce({ id: 3 })}
       ref={ref}
     />
   )
@@ -70,9 +70,9 @@ test('No add button when addRowsComponent receives false', () => {
   expect(screen.queryByText('Add')).not.toBeInTheDocument()
 })
 
-test('Add multiple rows', () => {
+test('Add multiple rows', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -82,7 +82,7 @@ test('Add multiple rows', () => {
       ]}
       onChange={onChange}
       columns={columns}
-      createRow={jest
+      createRow={vi
         .fn()
         .mockReturnValueOnce({ id: 3 })
         .mockReturnValueOnce({ id: 4 })
@@ -91,8 +91,8 @@ test('Add multiple rows', () => {
     />
   )
 
-  userEvent.type(screen.getByRole('spinbutton'), '{selectall}3')
-  userEvent.click(screen.getByText('Add'))
+  await userEvent.type(screen.getByRole('spinbutton'), '{selectall}3')
+  await userEvent.click(screen.getByText('Add'))
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -119,9 +119,11 @@ test('Add multiple rows', () => {
     [{ type: 'CREATE', fromRowIndex: 2, toRowIndex: 5 }]
   )
 
-  expect(ref.current.activeCell).toEqual({
-    col: 0,
-    colId: 'firstName',
-    row: 4,
+  await waitFor(() => {
+    expect(ref.current.activeCell).toEqual({
+      col: 0,
+      colId: 'firstName',
+      row: 4,
+    })
   })
 })

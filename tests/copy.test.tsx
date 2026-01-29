@@ -1,5 +1,5 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, screen, act, fireEvent, waitFor } from '@testing-library/react'
 import {
@@ -10,7 +10,7 @@ import {
   DataSheetGridRef,
 } from '../src'
 
-jest.mock('react-resize-detector', () => ({
+vi.mock('react-resize-detector', () => ({
   useResizeDetector: () => ({ width: 100, height: 100 }),
 }))
 
@@ -46,7 +46,7 @@ const rows = [
 
 test('Copy single cell', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -87,7 +87,7 @@ test('Copy multiple cell', async () => {
 
 test('Cut multiple cells', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid

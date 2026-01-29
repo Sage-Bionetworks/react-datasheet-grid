@@ -1,5 +1,5 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, act } from '@testing-library/react'
 import {
@@ -10,7 +10,7 @@ import {
   DataSheetGridRef,
 } from '../src'
 
-jest.mock('react-resize-detector', () => ({
+vi.mock('react-resize-detector', () => ({
   useResizeDetector: () => ({ width: 100, height: 100 }),
 }))
 
@@ -19,9 +19,9 @@ const columns: Column[] = [
   keyColumn('lastName', textColumn),
 ]
 
-test('Duplicate row with Cmd+D', () => {
+test('Duplicate row with Cmd+D', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -38,7 +38,7 @@ test('Duplicate row with Cmd+D', () => {
 
   act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
 
-  userEvent.keyboard('[MetaLeft>]d[/MetaLeft]')
+  await userEvent.keyboard('[MetaLeft>]d[/MetaLeft]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -62,9 +62,9 @@ test('Duplicate row with Cmd+D', () => {
   })
 })
 
-test('Duplicate row with Ctrl+D', () => {
+test('Duplicate row with Ctrl+D', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -85,7 +85,7 @@ test('Duplicate row with Ctrl+D', () => {
     })
   )
 
-  userEvent.keyboard('[ControlLeft>]d[/ControlLeft]')
+  await userEvent.keyboard('[ControlLeft>]d[/ControlLeft]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -109,10 +109,10 @@ test('Duplicate row with Ctrl+D', () => {
   })
 })
 
-test('Duplicate multiple rows', () => {
+test('Duplicate multiple rows', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
-  const duplicateRow = jest.fn(({ rowData }) => ({ ...rowData }))
+  const onChange = vi.fn()
+  const duplicateRow = vi.fn(({ rowData }) => ({ ...rowData }))
 
   render(
     <DataSheetGrid
@@ -135,7 +135,7 @@ test('Duplicate multiple rows', () => {
     })
   )
 
-  userEvent.keyboard('[ControlLeft>]d[/ControlLeft]')
+  await userEvent.keyboard('[ControlLeft>]d[/ControlLeft]')
 
   expect(onChange).toHaveBeenCalledWith(
     [
@@ -175,9 +175,9 @@ test('Duplicate multiple rows', () => {
   })
 })
 
-test('Try to duplicate locked rows', () => {
+test('Try to duplicate locked rows', async () => {
   const ref = { current: null as unknown as DataSheetGridRef }
-  const onChange = jest.fn()
+  const onChange = vi.fn()
 
   render(
     <DataSheetGrid
@@ -195,7 +195,7 @@ test('Try to duplicate locked rows', () => {
 
   act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
 
-  userEvent.keyboard('[MetaLeft>]d[/MetaLeft]')
+  await userEvent.keyboard('[MetaLeft>]d[/MetaLeft]')
 
   expect(onChange).not.toHaveBeenCalled()
 })

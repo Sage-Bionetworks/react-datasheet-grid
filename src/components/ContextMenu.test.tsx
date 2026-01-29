@@ -1,12 +1,12 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, screen } from '@testing-library/react'
 import { ContextMenu } from './ContextMenu'
 import { MatcherFunction } from '@testing-library/dom/types/matches'
 
 test('Closes properly', () => {
-  const onClose = jest.fn()
+  const onClose = vi.fn()
   const { container } = render(
     <ContextMenu
       cursorIndex={{ col: 0, row: 0 }}
@@ -21,8 +21,8 @@ test('Closes properly', () => {
 })
 
 test('Click on item', () => {
-  const onClose = jest.fn()
-  const onInsertRowBelow = jest.fn()
+  const onClose = vi.fn()
+  const onInsertRowBelow = vi.fn()
   render(
     <ContextMenu
       cursorIndex={{ col: 0, row: 0 }}

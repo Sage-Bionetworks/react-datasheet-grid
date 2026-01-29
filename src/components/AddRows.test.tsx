@@ -1,5 +1,5 @@
 import React from 'react'
-import '@testing-library/jest-dom'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { act, render, screen } from '@testing-library/react'
 import { AddRows } from './AddRows'
@@ -14,7 +14,7 @@ test('Has correct classes', () => {
 })
 
 test('Calls addRows', () => {
-  const addRows = jest.fn()
+  const addRows = vi.fn()
   render(<AddRows addRows={addRows} />)
   const button = screen.getByRole('button')
   const input = screen.getByRole('spinbutton')
