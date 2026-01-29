@@ -1,12 +1,15 @@
 {
   "name": "react-datasheet-grid",
+  "type": "module",
   "version": "4.11.5",
   "description": "An Excel-like React component to create beautiful spreadsheets.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "rm -f tsconfig.tsbuildinfo && rimraf ./dist && tsc && cpx \"src/**/*.css\" dist",
-    "start": "concurrently \"tsc --watch\" \"cpx \\\"src/**/*.css\\\" dist --watch\"",
+    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --minify && cp src/style.css dist/style.css ",
+    "start": "tsup src/index.tsx --format esm,cjs --watch --dts",
+    "prepare": "pnpm run build",
     "format": "prettier --write src/. && prettier --write example/src/.",
     "lint": "eslint src/.",
     "test": "jest"
@@ -22,6 +25,14 @@
     "notion",
     "table"
   ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+   "./dist/style.css": "./dist/style.css" 
+  },
   "author": "Nicolas Keller (https://github.com/nick-keller)",
   "license": "MIT",
   "repository": "nick-keller/react-datasheet-grid",
@@ -52,6 +63,7 @@
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.3",
     "ts-node": "^10.9.1",
+    "tsup": "^8.5.1",
     "typescript": "^4.9.4"
   },
   "files": [
