@@ -9,7 +9,6 @@
   "scripts": {
     "build": "tsup src/index.tsx --format esm,cjs --dts --clean --minify && cp src/style.css dist/style.css ",
     "start": "tsup src/index.tsx --format esm,cjs --watch --dts",
-    "prepare": "pnpm build",
     "format": "prettier --write src/. && prettier --write example/src/.",
     "lint": "eslint src/.",
     "test": "jest"
