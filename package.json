@@ -46,7 +46,6 @@
   "license": "MIT",
   "homepage": "https://react-datasheet-grid.netlify.app/",
   "devDependencies": {
-    "@jest/types": "^27.4.2",
     "@testing-library/jest-dom": "^5.15.1",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",

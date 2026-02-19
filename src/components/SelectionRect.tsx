@@ -48,6 +48,7 @@ export const SelectionRect = React.memo<SelectionContextType>(
     rowHeight,
     activeCell,
     hasStickyRightColumn,
+    pinFirstColumns,
     dataLength,
     viewWidth,
     viewHeight,
