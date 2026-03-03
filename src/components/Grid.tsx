@@ -184,7 +184,7 @@ export const Grid = <T extends any>({
                 }
                 stickyLeft={isStickyLeft}
                 width={col.size}
-                left={col.start}
+                left={isStickyLeft ? getStickyLeftOffset(col.index) : col.start}
                 className={cx(
                   'dsg-cell-header',
                   selectionColMin !== undefined &&
@@ -270,7 +270,7 @@ export const Grid = <T extends any>({
                         : cellClassName
                     )}
                     width={col.size}
-                    left={col.start}
+                    left={isStickyLeft ? getStickyLeftOffset(col.index) : col.start}
                   >
                     <Component
                       rowData={data[row.index]}
