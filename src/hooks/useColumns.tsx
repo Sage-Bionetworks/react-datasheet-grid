@@ -74,7 +74,7 @@ export const useColumns = <T extends any>(
   columns: Partial<Column<T, any, any>>[],
   gutterColumn?: SimpleColumn<T, any> | false,
   stickyRightColumn?: SimpleColumn<T, any>,
-  pinFirstColumns: number = 0
+  pinFirstColumn: boolean = false
 ): Column<T, any, any>[] => {
   return useMemo<Column<T, any, any>[]>(() => {
     const partialColumns: Partial<Column<T, any, any>>[] = [
@@ -126,8 +126,8 @@ export const useColumns = <T extends any>(
               shrink: undefined,
             }
 
-      // Mark first N columns (after gutter at index 0) as sticky-left
-      const isStickyLeft = index > 0 && index <= pinFirstColumns
+      // Mark first column (after gutter at index 0) as sticky-left if enabled
+      const isStickyLeft = index === 1 && pinFirstColumn
 
       return {
         ...column,
@@ -147,5 +147,5 @@ export const useColumns = <T extends any>(
         stickyLeft: isStickyLeft,
       } as Column<T, any, any>
     })
-  }, [gutterColumn, stickyRightColumn, columns, pinFirstColumns])
+  }, [gutterColumn, stickyRightColumn, columns, pinFirstColumn])
 }
