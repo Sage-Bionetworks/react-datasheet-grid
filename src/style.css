@@ -85,11 +85,7 @@
   position: sticky !important;
   z-index: 30;
   transform: translateY(-100%) !important;
-}
-
-.dsg-cell-header.dsg-cell-sticky-left {
   box-shadow: 1px 0 var(--dsg-border-color);
-  transform: translateY(-100%) !important;
 }
 
 .dsg-cell-disabled {
