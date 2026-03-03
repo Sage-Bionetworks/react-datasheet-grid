@@ -18,7 +18,7 @@ export const Grid = <T extends any>({
   innerRef,
   columnWidths,
   hasStickyRightColumn,
-  pinFirstColumns,
+  pinFirstColumn,
   displayHeight,
   headerRowHeight,
   rowHeight,
@@ -44,7 +44,7 @@ export const Grid = <T extends any>({
   innerRef: RefObject<HTMLDivElement>
   columnWidths?: number[]
   hasStickyRightColumn: boolean
-  pinFirstColumns: number
+  pinFirstColumn: boolean
   displayHeight: number
   headerRowHeight: number
   rowHeight: (index: number) => { height: number }
@@ -103,16 +103,14 @@ export const Grid = <T extends any>({
       if (result[0] !== 0) {
         result.unshift(0)
       }
-      // Always include sticky left columns (indices 1 to pinFirstColumns)
-      for (let i = 1; i <= pinFirstColumns; i++) {
-        if (!result.includes(i)) {
-          // Find the correct position to insert this index
-          const insertPos = result.findIndex(idx => idx > i)
-          if (insertPos === -1) {
-            result.push(i)
-          } else {
-            result.splice(insertPos, 0, i)
-          }
+      // Always include first column (index 1) if it's pinned
+      if (pinFirstColumn && !result.includes(1)) {
+        // Find the correct position to insert index 1
+        const insertPos = result.findIndex(idx => idx > 1)
+        if (insertPos === -1) {
+          result.push(1)
+        } else {
+          result.splice(insertPos, 0, 1)
         }
       }
       // Ensure sticky right column is always included
