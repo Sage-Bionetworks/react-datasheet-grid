@@ -50,7 +50,7 @@ function App() {
         value={data}
         onChange={setData}
         columns={columns}
-        pinFirstColumns={1}
+        pinFirstColumn={true}
       />
     </div>
   )
