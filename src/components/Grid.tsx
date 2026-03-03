@@ -177,7 +177,6 @@ export const Grid = <T extends any>({
           >
             {colVirtualizer.getVirtualItems().map((col) => {
               const isStickyLeft = Boolean(columns[col.index].stickyLeft)
-              const leftOffset = isStickyLeft ? getStickyLeftOffset(col.index) : col.start
               return (
               <CellComponent
                 key={col.key}
@@ -187,7 +186,7 @@ export const Grid = <T extends any>({
                 }
                 stickyLeft={isStickyLeft}
                 width={col.size}
-                left={leftOffset}
+                left={col.start}
                 className={cx(
                   'dsg-cell-header',
                   selectionColMin !== undefined &&
@@ -273,7 +272,7 @@ export const Grid = <T extends any>({
                         : cellClassName
                     )}
                     width={col.size}
-                    left={isStickyLeft ? getStickyLeftOffset(col.index) : col.start}
+                    left={col.start}
                   >
                     <Component
                       rowData={data[row.index]}
