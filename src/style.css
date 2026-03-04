@@ -67,6 +67,8 @@
   position: absolute;
   top: 0;
   height: 100%;
+  z-index: 1;
+  pointer-events: auto;
 }
 
 .dsg-hidden-cell {
@@ -83,9 +85,14 @@
 
 .dsg-cell-sticky-left {
   position: sticky !important;
-  z-index: 30;
+  z-index: 35;
   transform: translateY(-100%) !important;
   box-shadow: 1px 0 var(--dsg-border-color);
+  pointer-events: auto !important;
+}
+
+.dsg-cell-header.dsg-cell-sticky-left {
+  z-index: 41;
 }
 
 .dsg-cell-disabled {
