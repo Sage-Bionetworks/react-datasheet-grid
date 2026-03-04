@@ -103,8 +103,8 @@ export const Grid = <T extends any>({
       if (result[0] !== 0) {
         result.unshift(0)
       }
-      // Always include first column (index 1) if it's pinned
-      if (pinFirstColumn && !result.includes(1)) {
+      // Always include first column (index 1) if it's pinned and exists
+      if (pinFirstColumn && columns.length > 1 && !result.includes(1)) {
         // Find the correct position to insert index 1
         const insertPos = result.findIndex(idx => idx > 1)
         if (insertPos === -1) {
@@ -135,8 +135,15 @@ export const Grid = <T extends any>({
 
   // Calculate left position for sticky-left columns
   const getStickyLeftOffset = (colIndex: number) => {
-    if (!columns[colIndex].stickyLeft || !columnWidths) {
+    // Non-sticky columns always start at 0
+    if (!columns[colIndex].stickyLeft) {
       return 0
+    }
+    // If we don't yet have measured column widths, fall back to the virtualizer's
+    // estimated offset for this column to avoid overlapping the gutter/first columns.
+    if (!columnWidths || !columnWidths.length) {
+      const estimatedOffset = colVirtualizer.getOffsetForIndex(colIndex)
+      return typeof estimatedOffset === 'number' ? estimatedOffset : 0
     }
     let offset = 0
     // Sum widths of all columns before this one (including gutter at index 0)

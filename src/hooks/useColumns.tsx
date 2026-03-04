@@ -126,8 +126,10 @@ export const useColumns = <T extends any>(
               shrink: undefined,
             }
 
-      // Mark first column (after gutter at index 0) as sticky-left if enabled
-      const isStickyLeft = index === 1 && pinFirstColumn
+      // Use user-provided stickyLeft when available; otherwise, mark first column
+      // (after gutter at index 0) as sticky-left if enabled via pinFirstColumn.
+      const isStickyLeft =
+        column.stickyLeft !== undefined ? column.stickyLeft : index === 1 && pinFirstColumn
 
       return {
         ...column,

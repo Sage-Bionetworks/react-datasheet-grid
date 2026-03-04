@@ -59,7 +59,7 @@ test('pinFirstColumn renders without errors', () => {
   }).not.toThrow()
   
   // Verify grid is initialized
-  expect(ref.current).toBeDefined()
+  expect(ref.current).not.toBeNull()
 })
 
 test('pinFirstColumn=false does not apply sticky-left class', () => {
