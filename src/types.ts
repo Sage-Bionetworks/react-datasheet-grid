@@ -64,7 +64,6 @@ export type SelectionContextType = {
   dataLength: number
   rowHeight: (index: number) => { height: number; top: number }
   hasStickyRightColumn: boolean
-  pinFirstColumn: boolean
   editing: boolean
   isCellDisabled: (cell: Cell) => boolean
   headerRowHeight: number
