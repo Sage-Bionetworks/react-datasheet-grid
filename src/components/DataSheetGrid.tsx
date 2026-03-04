@@ -254,6 +254,20 @@ export const DataSheetGrid = React.memo(
                 x = 0
               }
 
+              // Check for sticky-left column (pinned first column)
+              if (
+                pinFirstColumn &&
+                columnWidths.length > 1 &&
+                event.clientX - outerBoundingClientRect.left <=
+                  columnWidths[0] + columnWidths[1]
+              ) {
+                // Click is within gutter + first column width
+                // If already in gutter range, leave it; otherwise set to first column
+                if (x > columnWidths[0]) {
+                  x = columnWidths[0] + 1
+                }
+              }
+
               if (
                 hasStickyRightColumn &&
                 outerBoundingClientRect.right - event.clientX <=
@@ -279,6 +293,7 @@ export const DataSheetGrid = React.memo(
           getOuterBoundingClientRect,
           headerRowHeight,
           hasStickyRightColumn,
+          pinFirstColumn,
           getRowIndex,
         ]
       )
