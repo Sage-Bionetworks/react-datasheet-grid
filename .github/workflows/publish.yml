@@ -6,7 +6,6 @@ on:
       - 'sage.*' # Trigger only on tags starting with sage.
     branches:
       - master
-      - use-pnpm-publish
 
 permissions:
   id-token: write  # Required for OIDC
