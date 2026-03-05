@@ -88,12 +88,13 @@ export const DataSheetGrid = React.memo(
         rowClassName,
         cellClassName,
         onScroll,
+        pinFirstColumn = false,
       }: DataSheetGridProps<T>,
       ref: React.ForwardedRef<DataSheetGridRef>
     ): JSX.Element => {
       const lastEditingCellRef = useRef<Cell | null>(null)
       const disableContextMenu = disableContextMenuRaw || lockRows
-      const columns = useColumns(rawColumns, gutterColumn, stickyRightColumn)
+      const columns = useColumns(rawColumns, gutterColumn, stickyRightColumn, pinFirstColumn)
       const hasStickyRightColumn = Boolean(stickyRightColumn)
       const innerRef = useRef<HTMLDivElement>(null)
       const outerRef = useRef<HTMLDivElement>(null)
@@ -254,6 +255,14 @@ export const DataSheetGrid = React.memo(
               }
 
               if (
+                pinFirstColumn &&
+                event.clientX - outerBoundingClientRect.left <=
+                  columnWidths[0] + columnWidths[1]
+              ) {
+                x = columnRights[0] + 1
+              }
+
+              if (
                 hasStickyRightColumn &&
                 outerBoundingClientRect.right - event.clientX <=
                   columnWidths[columnWidths.length - 1]
@@ -278,6 +287,7 @@ export const DataSheetGrid = React.memo(
           getOuterBoundingClientRect,
           headerRowHeight,
           hasStickyRightColumn,
+          pinFirstColumn,
           getRowIndex,
         ]
       )
@@ -1782,6 +1792,7 @@ export const DataSheetGrid = React.memo(
             outerRef={outerRef}
             columnWidths={columnWidths}
             hasStickyRightColumn={hasStickyRightColumn}
+            pinFirstColumn={pinFirstColumn}
             displayHeight={displayHeight}
             data={data}
             fullWidth={fullWidth}

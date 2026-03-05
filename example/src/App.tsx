@@ -46,7 +46,12 @@ function App() {
         background: '#f3f3f3',
       }}
     >
-      <DataSheetGrid value={data} onChange={setData} columns={columns} />
+      <DataSheetGrid
+        value={data}
+        onChange={setData}
+        columns={columns}
+        pinFirstColumn={true}
+      />
     </div>
   )
 }

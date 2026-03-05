@@ -73,7 +73,8 @@ export const parseFlexValue = (value: string | number) => {
 export const useColumns = <T extends any>(
   columns: Partial<Column<T, any, any>>[],
   gutterColumn?: SimpleColumn<T, any> | false,
-  stickyRightColumn?: SimpleColumn<T, any>
+  stickyRightColumn?: SimpleColumn<T, any>,
+  pinFirstColumn: boolean = false
 ): Column<T, any, any>[] => {
   return useMemo<Column<T, any, any>[]>(() => {
     const partialColumns: Partial<Column<T, any, any>>[] = [
@@ -115,7 +116,7 @@ export const useColumns = <T extends any>(
       })
     }
 
-    return partialColumns.map<Column<T, any, any>>((column) => {
+    return partialColumns.map<Column<T, any, any>>((column, index) => {
       const legacyWidth =
         column.width !== undefined
           ? parseFlexValue(column.width)
@@ -124,6 +125,11 @@ export const useColumns = <T extends any>(
               grow: undefined,
               shrink: undefined,
             }
+
+      // Use user-provided stickyLeft when available; otherwise, mark first column
+      // (after gutter at index 0) as sticky-left if enabled via pinFirstColumn.
+      const isStickyLeft =
+        column.stickyLeft !== undefined ? column.stickyLeft : index === 1 && pinFirstColumn
 
       return {
         ...column,
@@ -140,7 +146,8 @@ export const useColumns = <T extends any>(
         pasteValue: column.pasteValue ?? identityRow,
         prePasteValues: column.prePasteValues ?? defaultPrePasteValues,
         isCellEmpty: column.isCellEmpty ?? defaultIsCellEmpty,
-      }
+        stickyLeft: isStickyLeft,
+      } as Column<T, any, any>
     })
-  }, [gutterColumn, stickyRightColumn, columns])
+  }, [gutterColumn, stickyRightColumn, columns, pinFirstColumn])
 }

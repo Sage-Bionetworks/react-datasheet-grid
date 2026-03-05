@@ -53,6 +53,7 @@ export type Column<T, C, PasteValue> = {
   pasteValue: (opt: { rowData: T; value: PasteValue; rowIndex: number }) => T
   prePasteValues: (values: string[]) => PasteValue[] | Promise<PasteValue[]>
   isCellEmpty: (opt: { rowData: T; rowIndex: number }) => boolean
+  stickyLeft?: boolean
 }
 
 export type SelectionContextType = {
@@ -135,6 +136,7 @@ export type DataSheetGridProps<T> = {
   columns?: Partial<Column<T, any, any>>[]
   gutterColumn?: SimpleColumn<T, any> | false
   stickyRightColumn?: SimpleColumn<T, any>
+  pinFirstColumn?: boolean
   rowKey?: string | ((opts: { rowData: T; rowIndex: number }) => string)
   height?: number
   rowHeight?: number | ((opt: { rowData: T; rowIndex: number }) => number)

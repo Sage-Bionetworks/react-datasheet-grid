@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git+https://github.com/sage-bionetworks/react-datasheet-grid.git"
   },
-  "version": "4.11.5-sage.3",
+  "version": "4.11.5-sage.4",
   "description": "An Excel-like React component to create beautiful spreadsheets.",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -46,7 +46,6 @@
   "license": "MIT",
   "homepage": "https://react-datasheet-grid.netlify.app/",
   "devDependencies": {
-    "@jest/types": "^27.4.2",
     "@testing-library/jest-dom": "^5.15.1",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
