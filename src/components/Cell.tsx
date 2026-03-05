@@ -10,6 +10,7 @@ export const Cell: FC<{
   children?: any
   width: number
   left: number
+  expandedWidth?: number
 }> = ({
   children,
   gutter,
@@ -19,7 +20,10 @@ export const Cell: FC<{
   className,
   width,
   left,
+  expandedWidth,
 }) => {
+  const isExpanded = expandedWidth !== undefined && expandedWidth > width
+
   return (
     <div
       className={cx(
@@ -28,10 +32,11 @@ export const Cell: FC<{
         disabled && 'dsg-cell-disabled',
         gutter && active && 'dsg-cell-gutter-active',
         stickyRight && 'dsg-cell-sticky-right',
+        isExpanded && 'dsg-cell-expanded',
         className
       )}
       style={{
-        width,
+        width: isExpanded ? expandedWidth : width,
         left: stickyRight ? undefined : left,
       }}
     >
