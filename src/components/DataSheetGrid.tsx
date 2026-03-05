@@ -42,6 +42,7 @@ import { getAllTabbableElements } from '../utils/tab'
 import { Grid } from './Grid'
 import { SelectionRect } from './SelectionRect'
 import { useRowHeights } from '../hooks/useRowHeights'
+import { useMeasureContent } from '../hooks/useMeasureContent'
 
 const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any, any>[] = []
@@ -1767,6 +1768,29 @@ export const DataSheetGrid = React.memo(
         columns,
       ])
 
+      // Calculate expanded width for active cell
+      const measureContent = useMeasureContent()
+      const activeCellExpandedWidth = useMemo(() => {
+        if (!activeCell || isCellDisabled(activeCell)) {
+          return undefined
+        }
+        // activeCell.col is 0-based for data columns (excludes gutter)
+        // but columns array includes gutter at index 0, so we need +1
+        const column = columns[activeCell.col + 1]
+        const rowData = data[activeCell.row]
+        if (!column || !columnWidths || !rowData) {
+          return undefined
+        }
+        const cellValue = column.copyValue({
+          rowData: rowData,
+          rowIndex: activeCell.row,
+        })
+        const contentWidth = measureContent(cellValue)
+        const currentWidth = columnWidths[activeCell.col + 1]
+        // Only expand if content is wider than current column
+        return contentWidth > currentWidth ? contentWidth : undefined
+      }, [activeCell, data, columns, columnWidths, measureContent, isCellDisabled])
+
       return (
         <div className={className} style={style}>
           <div
@@ -1818,6 +1842,7 @@ export const DataSheetGrid = React.memo(
               editing={editing}
               isCellDisabled={isCellDisabled}
               expandSelection={expandSelection}
+              activeCellExpandedWidth={activeCellExpandedWidth}
             />
           </Grid>
           <div
