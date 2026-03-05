@@ -5,8 +5,7 @@ on:
     tags:
       - 'sage.*' # Trigger only on tags starting with sage.
     branches:
-      - main
-      - SWC-7683
+      - master
 
 permissions:
   id-token: write  # Required for OIDC
