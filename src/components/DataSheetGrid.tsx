@@ -255,6 +255,14 @@ export const DataSheetGrid = React.memo(
               }
 
               if (
+                pinFirstColumn &&
+                event.clientX - outerBoundingClientRect.left <=
+                  columnWidths[0] + columnWidths[1]
+              ) {
+                x = columnRights[0] + 1
+              }
+
+              if (
                 hasStickyRightColumn &&
                 outerBoundingClientRect.right - event.clientX <=
                   columnWidths[columnWidths.length - 1]
