@@ -10,6 +10,7 @@ import {
 import cx from 'classnames'
 import { Cell as CellComponent } from './Cell'
 import { useMemoizedIndexCallback } from '../hooks/useMemoizedIndexCallback'
+import { useMeasureContent } from '../hooks/useMeasureContent'
 
 export const Grid = <T extends any>({
   data,
@@ -124,6 +125,9 @@ export const Grid = <T extends any>({
   const selectionMinRow = selection?.min.row ?? activeCell?.row
   const selectionMaxRow = selection?.max.row ?? activeCell?.row
 
+  // Hook to measure text content width for cell expansion
+  const measureContent = useMeasureContent()
+
   return (
     <div
       ref={outerRef}
@@ -211,6 +215,20 @@ export const Grid = <T extends any>({
                   activeCell?.row === row.index &&
                   activeCell.col === col.index - 1
 
+                // Calculate expanded width for active, non-disabled, non-gutter cells
+                let expandedWidth: number | undefined = undefined
+                if (cellIsActive && !cellDisabled && col.index > 0) {
+                  const cellValue = columns[col.index].copyValue({
+                    rowData: data[row.index],
+                    rowIndex: row.index,
+                  })
+                  const contentWidth = measureContent(cellValue)
+                  // Only expand if content is wider than current column
+                  if (contentWidth > col.size) {
+                    expandedWidth = contentWidth
+                  }
+                }
+
                 return (
                   <CellComponent
                     key={col.key}
@@ -238,6 +256,7 @@ export const Grid = <T extends any>({
                     )}
                     width={col.size}
                     left={col.start}
+                    expandedWidth={expandedWidth}
                   >
                     <Component
                       rowData={data[row.index]}
