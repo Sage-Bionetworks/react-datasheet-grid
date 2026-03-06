@@ -162,6 +162,15 @@
   background: var(--dsg-selection-disabled-background-color);
 }
 
+/* Sticky selection styling for pinned columns */
+.dsg-active-cell-sticky,
+.dsg-selection-rect-sticky,
+.dsg-selection-col-marker-container-sticky,
+.dsg-expand-rows-rect-sticky,
+.dsg-expand-rows-indicator-sticky {
+  z-index: 55;
+}
+
 .dsg-scrollable-view-container {
   position: absolute;
   pointer-events: none;
