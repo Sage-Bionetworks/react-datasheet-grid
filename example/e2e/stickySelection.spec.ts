@@ -13,7 +13,9 @@ test.describe('Sticky Selection', () => {
   }) => {
     // Click on a cell in the pinned column (first data column, row 0)
     // The grid has: gutter | Active (checkbox, pinned) | First name | Last name
-    const pinnedCell = page.locator('.dsg-cell-sticky-left').first()
+    const pinnedCell = page
+      .locator('.dsg-row:not(.dsg-row-header) .dsg-cell-sticky-left')
+      .first()
     await pinnedCell.click()
 
     // Wait for selection to appear
