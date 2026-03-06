@@ -1825,6 +1825,7 @@ export const DataSheetGrid = React.memo(
             outerRef={outerRef}
             columnWidths={columnWidths}
             hasStickyRightColumn={hasStickyRightColumn}
+            pinFirstColumn={pinFirstColumn}
             displayHeight={displayHeight}
             data={data}
             fullWidth={fullWidth}
