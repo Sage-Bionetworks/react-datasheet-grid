@@ -52,7 +52,7 @@
 .dsg-row-header {
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 60;
 }
 
 .dsg-cell {
@@ -92,7 +92,7 @@
 }
 
 .dsg-cell-header.dsg-cell-sticky-left {
-  z-index: 41;
+  z-index: 61;
 }
 
 .dsg-cell-disabled {
