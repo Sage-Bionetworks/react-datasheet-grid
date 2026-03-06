@@ -133,6 +133,39 @@ export const DataSheetGrid = React.memo(
         columnRights,
       } = useColumnWidths(columns, width)
 
+      // Create stickyLeftColumns array for SelectionRect
+      // stickyLeftColumns[col] tells if the column at activeCell.col is sticky
+      // activeCell.col corresponds to columns[col + 1]
+      const stickyLeftColumns = useMemo(() => {
+        return columns.slice(1).map((col) => Boolean(col.stickyLeft))
+      }, [columns])
+
+      // Function to get the sticky left offset for a column (internal index)
+      const getStickyLeftOffset = useCallback(
+        (colIndex: number): number => {
+          if (!columns[colIndex]?.stickyLeft) {
+            return 0
+          }
+          if (!columnWidths || !columnWidths.length) {
+            let offset = 0
+            for (let i = 0; i < colIndex; i++) {
+              if (columns[i].stickyLeft || i === 0) {
+                offset += columns[i].basis || columns[i].minWidth || 100
+              }
+            }
+            return offset
+          }
+          let offset = 0
+          for (let i = 0; i < colIndex; i++) {
+            if (columns[i].stickyLeft || i === 0) {
+              offset += columnWidths[i]
+            }
+          }
+          return offset
+        },
+        [columns, columnWidths]
+      )
+
       // x,y coordinates of the right click
       const [contextMenu, setContextMenu] = useState<{
         x: number
@@ -1792,7 +1825,6 @@ export const DataSheetGrid = React.memo(
             outerRef={outerRef}
             columnWidths={columnWidths}
             hasStickyRightColumn={hasStickyRightColumn}
-            pinFirstColumn={pinFirstColumn}
             displayHeight={displayHeight}
             data={data}
             fullWidth={fullWidth}
@@ -1829,6 +1861,8 @@ export const DataSheetGrid = React.memo(
               editing={editing}
               isCellDisabled={isCellDisabled}
               expandSelection={expandSelection}
+              stickyLeftColumns={stickyLeftColumns}
+              getStickyLeftOffset={getStickyLeftOffset}
             />
           </Grid>
           <div
