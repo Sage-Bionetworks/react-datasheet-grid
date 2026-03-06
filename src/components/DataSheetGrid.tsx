@@ -96,6 +96,9 @@ export const DataSheetGrid = React.memo(
       const disableContextMenu = disableContextMenuRaw || lockRows
       const columns = useColumns(rawColumns, gutterColumn, stickyRightColumn, pinFirstColumn)
       const hasStickyRightColumn = Boolean(stickyRightColumn)
+      // Derive hasStickyLeftColumn from columns or pinFirstColumn prop
+      // This allows click handling to work when stickyLeft is set directly on columns
+      const hasStickyLeftColumn = pinFirstColumn || Boolean(columns[1]?.stickyLeft)
       const innerRef = useRef<HTMLDivElement>(null)
       const outerRef = useRef<HTMLDivElement>(null)
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
@@ -288,7 +291,7 @@ export const DataSheetGrid = React.memo(
               }
 
               if (
-                pinFirstColumn &&
+                hasStickyLeftColumn &&
                 event.clientX - outerBoundingClientRect.left <=
                   columnWidths[0] + columnWidths[1]
               ) {
@@ -320,7 +323,7 @@ export const DataSheetGrid = React.memo(
           getOuterBoundingClientRect,
           headerRowHeight,
           hasStickyRightColumn,
-          pinFirstColumn,
+          hasStickyLeftColumn,
           getRowIndex,
         ]
       )
