@@ -56,6 +56,8 @@ export const SelectionRect = React.memo<SelectionContextType>(
     isCellDisabled,
     editing,
     expandSelection,
+    stickyLeftColumns,
+    getStickyLeftOffset,
   }) => {
     const activeCellIsDisabled = activeCell ? isCellDisabled(activeCell) : false
 
@@ -108,8 +110,70 @@ export const SelectionRect = React.memo<SelectionContextType>(
       top: rowHeight(selection.min.row).top + headerRowHeight,
     }
 
+    // Determine if active cell is in a sticky column
+    const activeCellIsSticky =
+      activeCell &&
+      stickyLeftColumns &&
+      getStickyLeftOffset &&
+      stickyLeftColumns[activeCell.col]
+
+    // Calculate sticky offset for active cell
+    // activeCell.col corresponds to internal columns[col + 1], so we add 1
+    const activeCellStickyLeft =
+      activeCellIsSticky && getStickyLeftOffset
+        ? getStickyLeftOffset(activeCell.col + 1)
+        : 0
+
+    // Determine if the entire selection is within sticky columns
+    const selectionIsSticky =
+      selection &&
+      stickyLeftColumns &&
+      getStickyLeftOffset &&
+      (() => {
+        for (let col = selection.min.col; col <= selection.max.col; col++) {
+          if (!stickyLeftColumns[col]) {
+            return false
+          }
+        }
+        return true
+      })()
+
+    // Calculate sticky offset for selection (using the leftmost column)
+    const selectionStickyLeft =
+      selectionIsSticky && selection && getStickyLeftOffset
+        ? getStickyLeftOffset(selection.min.col + 1)
+        : 0
+
     const minSelection = selection?.min || activeCell
     const maxSelection = selection?.max || activeCell
+
+    // Determine if the max column of the selection/activeCell is sticky
+    // This affects the expand rows indicator position
+    const maxColumnIsSticky =
+      maxSelection &&
+      stickyLeftColumns &&
+      getStickyLeftOffset &&
+      stickyLeftColumns[maxSelection.col]
+
+    // Sticky offset for the rightmost edge of the selection (expand indicator position)
+    const maxColumnStickyRight =
+      maxColumnIsSticky && maxSelection && getStickyLeftOffset
+        ? getStickyLeftOffset(maxSelection.col + 1) +
+          columnWidths[maxSelection.col + 1]
+        : 0
+
+    // Determine if any part of the selection is sticky (for the column marker)
+    const selectionHasStickyMinCol =
+      (selection && stickyLeftColumns && stickyLeftColumns[selection.min.col]) ||
+      (activeCell && stickyLeftColumns && stickyLeftColumns[activeCell.col])
+
+    // Sticky offset for the column marker (using the leftmost selected column)
+    const colMarkerStickyLeft =
+      selectionHasStickyMinCol && getStickyLeftOffset
+        ? getStickyLeftOffset(
+            (selection?.min.col ?? activeCell?.col ?? 0) + 1
+          )
+        : 0
 
     const expandRowsIndicator = maxSelection &&
       expandSelection !== null && {
@@ -188,11 +252,37 @@ export const SelectionRect = React.memo<SelectionContextType>(
             }}
           />
         </div>
-        {(selectionRect || activeCellRect) && (
+        {(selectionRect || activeCellRect) && !selectionHasStickyMinCol && (
           <div
             className="dsg-selection-col-marker-container"
             style={{
               left: selectionRect?.left ?? activeCellRect?.left,
+              width: selectionRect?.width ?? activeCellRect?.width,
+              height:
+                rowHeight(dataLength - 1).top +
+                rowHeight(dataLength - 1).height +
+                headerRowHeight,
+            }}
+          >
+            <div
+              className={cx(
+                'dsg-selection-col-marker',
+                selectionIsDisabled && 'dsg-selection-col-marker-disabled'
+              )}
+              style={{ top: headerRowHeight }}
+            />
+          </div>
+        )}
+        {(selectionRect || activeCellRect) && selectionHasStickyMinCol && (
+          <div
+            className={cx(
+              'dsg-selection-col-marker-container',
+              'dsg-selection-col-marker-container-sticky'
+            )}
+            style={{
+              position: 'sticky',
+              left: colMarkerStickyLeft,
+              top: 'auto',
               width: selectionRect?.width ?? activeCellRect?.width,
               height:
                 rowHeight(dataLength - 1).top +
@@ -227,7 +317,7 @@ export const SelectionRect = React.memo<SelectionContextType>(
             />
           </div>
         )}
-        {activeCellRect && activeCell && (
+        {activeCellRect && activeCell && !activeCellIsSticky && (
           <div
             className={cx('dsg-active-cell', {
               'dsg-active-cell-focus': editing,
@@ -236,7 +326,33 @@ export const SelectionRect = React.memo<SelectionContextType>(
             style={activeCellRect}
           />
         )}
-        {selectionRect && activeCellRect && (
+        {activeCellRect && activeCell && activeCellIsSticky && (
+          <div
+            style={{
+              position: 'absolute',
+              top: activeCellRect.top,
+              left: 0,
+              right: 0,
+              height: activeCellRect.height,
+              pointerEvents: 'none',
+            }}
+          >
+            <div
+              className={cx('dsg-active-cell', {
+                'dsg-active-cell-focus': editing,
+                'dsg-active-cell-disabled': activeCellIsDisabled,
+                'dsg-active-cell-sticky': true,
+              })}
+              style={{
+                position: 'sticky',
+                left: activeCellStickyLeft,
+                width: activeCellRect.width,
+                height: '100%',
+              }}
+            />
+          </div>
+        )}
+        {selectionRect && activeCellRect && !selectionIsSticky && (
           <div
             className={cx(
               'dsg-selection-rect',
@@ -253,10 +369,68 @@ export const SelectionRect = React.memo<SelectionContextType>(
             }}
           />
         )}
-        {expandRowsRect && (
-          <div className={cx('dsg-expand-rows-rect')} style={expandRowsRect} />
+        {selectionRect && activeCellRect && selectionIsSticky && (
+          <div
+            style={{
+              position: 'absolute',
+              top: selectionRect.top,
+              left: 0,
+              right: 0,
+              height: selectionRect.height,
+              pointerEvents: 'none',
+            }}
+          >
+            <div
+              className={cx(
+                'dsg-selection-rect',
+                selectionIsDisabled && 'dsg-selection-rect-disabled',
+                'dsg-selection-rect-sticky'
+              )}
+              style={{
+                position: 'sticky',
+                left: selectionStickyLeft,
+                width: selectionRect.width,
+                height: '100%',
+                background: 'var(--dsg-selection-background-color)',
+                clipPath: buildClipPath(
+                  activeCellRect.top - selectionRect.top,
+                  activeCellStickyLeft - selectionStickyLeft,
+                  activeCellRect.top + activeCellRect.height - selectionRect.top,
+                  activeCellStickyLeft + activeCellRect.width - selectionStickyLeft
+                ),
+              }}
+            />
+          </div>
         )}
-        {expandRowsIndicator && (
+        {expandRowsRect && !selectionIsSticky && (
+          <div
+            className="dsg-expand-rows-rect"
+            style={expandRowsRect}
+          />
+        )}
+        {expandRowsRect && selectionIsSticky && (
+          <div
+            style={{
+              position: 'absolute',
+              top: expandRowsRect.top,
+              left: 0,
+              right: 0,
+              height: expandRowsRect.height,
+              pointerEvents: 'none',
+            }}
+          >
+            <div
+              className={cx('dsg-expand-rows-rect', 'dsg-expand-rows-rect-sticky')}
+              style={{
+                position: 'sticky',
+                left: selectionStickyLeft,
+                width: expandRowsRect.width,
+                height: '100%',
+              }}
+            />
+          </div>
+        )}
+        {expandRowsIndicator && !maxColumnIsSticky && (
           <div
             className={cx(
               'dsg-expand-rows-indicator',
@@ -264,6 +438,31 @@ export const SelectionRect = React.memo<SelectionContextType>(
             )}
             style={expandRowsIndicator}
           />
+        )}
+        {expandRowsIndicator && maxColumnIsSticky && (
+          <div
+            style={{
+              position: 'absolute',
+              top: expandRowsIndicator.top,
+              left: 0,
+              right: 0,
+              height: 0,
+              pointerEvents: 'none',
+            }}
+          >
+            <div
+              className={cx(
+                'dsg-expand-rows-indicator',
+                selectionIsDisabled && 'dsg-expand-rows-indicator-disabled',
+                'dsg-expand-rows-indicator-sticky'
+              )}
+              style={{
+                position: 'sticky',
+                left: maxColumnStickyRight,
+                transform: expandRowsIndicator.transform,
+              }}
+            />
+          </div>
         )}
       </>
     )
