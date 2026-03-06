@@ -72,6 +72,8 @@ export type SelectionContextType = {
   contentWidth?: number
   edges: { top: boolean; right: boolean; bottom: boolean; left: boolean }
   expandSelection: number | null
+  stickyLeftColumns?: boolean[]
+  getStickyLeftOffset?: (colIndex: number) => number
 }
 
 export type SimpleColumn<T, C> = Partial<

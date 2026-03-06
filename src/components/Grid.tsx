@@ -104,7 +104,9 @@ export const Grid = <T extends any>({
         result.unshift(0)
       }
       // Always include first column (index 1) if it's pinned and exists
-      if (pinFirstColumn && columns.length > 1 && !result.includes(1)) {
+      // Check both the pinFirstColumn prop and the column's stickyLeft property
+      const firstColumnIsPinned = pinFirstColumn || columns[1]?.stickyLeft
+      if (firstColumnIsPinned && columns.length > 1 && !result.includes(1)) {
         // Find the correct position to insert index 1
         const insertPos = result.findIndex(idx => idx > 1)
         if (insertPos === -1) {

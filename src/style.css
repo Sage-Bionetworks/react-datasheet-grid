@@ -52,7 +52,7 @@
 .dsg-row-header {
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 60;
 }
 
 .dsg-cell {
@@ -92,7 +92,7 @@
 }
 
 .dsg-cell-header.dsg-cell-sticky-left {
-  z-index: 41;
+  z-index: 61;
 }
 
 .dsg-cell-disabled {
@@ -160,6 +160,15 @@
 
 .dsg-selection-rect-disabled {
   background: var(--dsg-selection-disabled-background-color);
+}
+
+/* Sticky selection styling for pinned columns */
+.dsg-active-cell.dsg-active-cell-sticky,
+.dsg-selection-rect.dsg-selection-rect-sticky,
+.dsg-selection-col-marker-container.dsg-selection-col-marker-container-sticky,
+.dsg-expand-rows-rect.dsg-expand-rows-rect-sticky,
+.dsg-expand-rows-indicator.dsg-expand-rows-indicator-sticky {
+  z-index: 55;
 }
 
 .dsg-scrollable-view-container {
