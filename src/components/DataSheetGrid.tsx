@@ -96,6 +96,9 @@ export const DataSheetGrid = React.memo(
       const disableContextMenu = disableContextMenuRaw || lockRows
       const columns = useColumns(rawColumns, gutterColumn, stickyRightColumn, pinFirstColumn)
       const hasStickyRightColumn = Boolean(stickyRightColumn)
+      // Derive hasStickyLeftColumn from columns or pinFirstColumn prop
+      // This allows click handling to work when stickyLeft is set directly on columns
+      const hasStickyLeftColumn = pinFirstColumn || Boolean(columns[1]?.stickyLeft)
       const innerRef = useRef<HTMLDivElement>(null)
       const outerRef = useRef<HTMLDivElement>(null)
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
@@ -132,6 +135,39 @@ export const DataSheetGrid = React.memo(
         columnWidths,
         columnRights,
       } = useColumnWidths(columns, width)
+
+      // Create stickyLeftColumns array for SelectionRect
+      // stickyLeftColumns[col] tells if the column at activeCell.col is sticky
+      // activeCell.col corresponds to columns[col + 1]
+      const stickyLeftColumns = useMemo(() => {
+        return columns.slice(1).map((col) => Boolean(col.stickyLeft))
+      }, [columns])
+
+      // Function to get the sticky left offset for a column (internal index)
+      const getStickyLeftOffset = useCallback(
+        (colIndex: number): number => {
+          if (!columns[colIndex]?.stickyLeft) {
+            return 0
+          }
+          if (!columnWidths || !columnWidths.length) {
+            let offset = 0
+            for (let i = 0; i < colIndex; i++) {
+              if (columns[i].stickyLeft || i === 0) {
+                offset += columns[i].basis || columns[i].minWidth || 100
+              }
+            }
+            return offset
+          }
+          let offset = 0
+          for (let i = 0; i < colIndex; i++) {
+            if (columns[i].stickyLeft || i === 0) {
+              offset += columnWidths[i]
+            }
+          }
+          return offset
+        },
+        [columns, columnWidths]
+      )
 
       // x,y coordinates of the right click
       const [contextMenu, setContextMenu] = useState<{
@@ -255,7 +291,7 @@ export const DataSheetGrid = React.memo(
               }
 
               if (
-                pinFirstColumn &&
+                hasStickyLeftColumn &&
                 event.clientX - outerBoundingClientRect.left <=
                   columnWidths[0] + columnWidths[1]
               ) {
@@ -287,7 +323,7 @@ export const DataSheetGrid = React.memo(
           getOuterBoundingClientRect,
           headerRowHeight,
           hasStickyRightColumn,
-          pinFirstColumn,
+          hasStickyLeftColumn,
           getRowIndex,
         ]
       )
@@ -1829,6 +1865,8 @@ export const DataSheetGrid = React.memo(
               editing={editing}
               isCellDisabled={isCellDisabled}
               expandSelection={expandSelection}
+              stickyLeftColumns={stickyLeftColumns}
+              getStickyLeftOffset={getStickyLeftOffset}
             />
           </Grid>
           <div

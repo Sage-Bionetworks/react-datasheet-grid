@@ -249,3 +249,137 @@ test('Can navigate vertically in pinned column', async () => {
   await userEvent.keyboard('{ArrowUp}')
   expect(ref.current.activeCell?.row).toBe(0)
 })
+
+test('Selection on sticky column renders with sticky class', () => {
+  const ref = { current: null as unknown as DataSheetGridRef }
+
+  render(
+    <DataSheetGrid
+      value={data}
+      columns={columns}
+      pinFirstColumn={true}
+      ref={ref}
+    />
+  )
+
+  // Select a cell in the pinned column
+  act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
+
+  // Check that the sticky active cell class is applied
+  const stickyActiveCell = document.querySelector('.dsg-active-cell-sticky')
+  expect(stickyActiveCell).not.toBeNull()
+})
+
+test('Selection on non-sticky column does not render sticky class', () => {
+  const ref = { current: null as unknown as DataSheetGridRef }
+
+  render(
+    <DataSheetGrid
+      value={data}
+      columns={columns}
+      pinFirstColumn={true}
+      ref={ref}
+    />
+  )
+
+  // Select a cell in non-pinned column
+  act(() => ref.current.setActiveCell({ col: 1, row: 0 }))
+
+  // Check that regular (non-sticky) active cell is rendered
+  const activeCell = document.querySelector('.dsg-active-cell')
+  expect(activeCell).not.toBeNull()
+
+  // Should not have the sticky class
+  const stickyActiveCell = document.querySelector('.dsg-active-cell-sticky')
+  expect(stickyActiveCell).toBeNull()
+})
+
+test('Selection rect for sticky columns has sticky class when all selected columns are sticky', () => {
+  const ref = { current: null as unknown as DataSheetGridRef }
+
+  render(
+    <DataSheetGrid
+      value={data}
+      columns={columns}
+      pinFirstColumn={true}
+      ref={ref}
+    />
+  )
+
+  // Select a range within the pinned column only (multiple rows in col 0)
+  act(() =>
+    ref.current.setSelection({
+      min: { col: 0, row: 0 },
+      max: { col: 0, row: 1 },
+    })
+  )
+
+  // Should have sticky selection rect since all selected columns are sticky
+  const stickySelectionRect = document.querySelector('.dsg-selection-rect-sticky')
+  expect(stickySelectionRect).not.toBeNull()
+})
+
+test('Selection rect spanning sticky and non-sticky columns does not have sticky class', () => {
+  const ref = { current: null as unknown as DataSheetGridRef }
+
+  render(
+    <DataSheetGrid
+      value={data}
+      columns={columns}
+      pinFirstColumn={true}
+      ref={ref}
+    />
+  )
+
+  // Select a range spanning pinned and non-pinned columns
+  act(() =>
+    ref.current.setSelection({
+      min: { col: 0, row: 0 },
+      max: { col: 1, row: 0 },
+    })
+  )
+
+  // Should not have sticky selection rect since selection spans non-sticky columns
+  const stickySelectionRect = document.querySelector('.dsg-selection-rect-sticky')
+  expect(stickySelectionRect).toBeNull()
+})
+
+test('Column marker has sticky class when selection is on sticky column', () => {
+  const ref = { current: null as unknown as DataSheetGridRef }
+
+  render(
+    <DataSheetGrid
+      value={data}
+      columns={columns}
+      pinFirstColumn={true}
+      ref={ref}
+    />
+  )
+
+  // Select a cell in the pinned column
+  act(() => ref.current.setActiveCell({ col: 0, row: 0 }))
+
+  // Check that the sticky column marker class is applied
+  const stickyColMarker = document.querySelector('.dsg-selection-col-marker-container-sticky')
+  expect(stickyColMarker).not.toBeNull()
+})
+
+test('Column marker does not have sticky class when selection is on non-sticky column', () => {
+  const ref = { current: null as unknown as DataSheetGridRef }
+
+  render(
+    <DataSheetGrid
+      value={data}
+      columns={columns}
+      pinFirstColumn={true}
+      ref={ref}
+    />
+  )
+
+  // Select a cell in non-pinned column
+  act(() => ref.current.setActiveCell({ col: 1, row: 0 }))
+
+  // Should not have sticky column marker class
+  const stickyColMarker = document.querySelector('.dsg-selection-col-marker-container-sticky')
+  expect(stickyColMarker).toBeNull()
+})
