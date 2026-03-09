@@ -460,6 +460,7 @@ export const SelectionRect = React.memo<SelectionContextType>(
                 position: 'sticky',
                 left: maxColumnStickyRight,
                 transform: expandRowsIndicator.transform,
+                pointerEvents: 'auto',
               }}
             />
           </div>
