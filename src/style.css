@@ -102,24 +102,14 @@
 .dsg-cell-expanded {
   /* Higher z-index to overlay adjacent cells, but below selection border (z-index: 20) */
   z-index: 15;
-  /* Allow content to overflow the cell boundaries */
+  /* Allow content to overflow into adjacent column space horizontally */
   overflow: visible;
-  /* Allow cell to expand vertically for wrapped text */
-  height: auto;
-  min-height: 100%;
 }
 
 .dsg-cell-expanded .dsg-input {
-  /* Remove truncation for expanded cells */
-  white-space: normal;
+  /* Remove horizontal truncation so the full value is visible */
   overflow: visible;
   text-overflow: clip;
-  /* Enable word wrapping for very long content */
-  word-wrap: break-word;
-  word-break: break-word;
-  /* Allow multi-line display */
-  height: auto;
-  min-height: 1rem;
 }
 
 .dsg-cell-header,
