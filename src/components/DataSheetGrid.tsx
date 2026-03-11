@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -104,6 +105,16 @@ export const DataSheetGrid = React.memo(
       const outerRef = useRef<HTMLDivElement>(null)
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
       const afterTabIndexRef = useRef<HTMLDivElement>(null)
+
+      // Read the computed font from a real .dsg-input element so Canvas
+      // measurements match the actual rendered text.
+      const [inputFont, setInputFont] = useState<string | undefined>(undefined)
+      useLayoutEffect(() => {
+        const el = outerRef.current?.querySelector<HTMLElement>('.dsg-input')
+        if (el) {
+          setInputFont(getComputedStyle(el).font)
+        }
+      }, [])
 
       // Default value is 1 for the border
       const [heightDiff, setHeightDiff] = useDebounceState(1, 100)
@@ -1815,7 +1826,7 @@ export const DataSheetGrid = React.memo(
       ])
 
       // Calculate expanded width for active cell
-      const measureContent = useMeasureContent()
+      const measureContent = useMeasureContent({ fontString: inputFont })
       const activeCellExpandedWidth = useMemo(() => {
         if (!activeCell || isCellDisabled(activeCell)) {
           return undefined
@@ -1827,10 +1838,9 @@ export const DataSheetGrid = React.memo(
         if (!column || !columnWidths || !rowData) {
           return undefined
         }
-        const cellValue = column.copyValue({
-          rowData: rowData,
-          rowIndex: activeCell.row,
-        })
+        const cellValue = column.displayValue
+          ? column.displayValue({ rowData, rowIndex: activeCell.row })
+          : column.copyValue({ rowData, rowIndex: activeCell.row })
         const contentWidth = measureContent(cellValue)
         const currentWidth = columnWidths[activeCell.col + 1]
         // Only expand if content is wider than current column
@@ -1872,6 +1882,7 @@ export const DataSheetGrid = React.memo(
             stopEditing={stopEditing}
             cellClassName={cellClassName}
             onScroll={onScroll}
+            activeCellExpandedWidth={activeCellExpandedWidth}
           >
             <SelectionRect
               columnRights={columnRights}
