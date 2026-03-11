@@ -107,14 +107,16 @@ export const DataSheetGrid = React.memo(
       const afterTabIndexRef = useRef<HTMLDivElement>(null)
 
       // Read the computed font from a real .dsg-input element so Canvas
-      // measurements match the actual rendered text.
+      // measurements match the actual rendered text. Re-runs when data length
+      // changes so an initially-empty grid picks up the font once rows appear.
       const [inputFont, setInputFont] = useState<string | undefined>(undefined)
       useLayoutEffect(() => {
+        if (inputFont) return
         const el = outerRef.current?.querySelector<HTMLElement>('.dsg-input')
         if (el) {
           setInputFont(getComputedStyle(el).font)
         }
-      }, [])
+      }, [data.length, inputFont])
 
       // Default value is 1 for the border
       const [heightDiff, setHeightDiff] = useDebounceState(1, 100)
