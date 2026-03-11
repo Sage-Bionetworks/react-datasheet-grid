@@ -1,21 +1,23 @@
 import { useCallback, useRef } from 'react'
 
 interface MeasureContentOptions {
-  fontSize?: string
-  fontFamily?: string
+  fontString?: string
   padding?: number
   maxWidth?: number
 }
 
 /**
- * Hook to measure text content width using Canvas API
- * Returns a function that measures text and returns the required width
+ * Hook to measure text content width using Canvas API.
+ * Returns a function that measures text and returns the required width.
+ *
+ * @param fontString - CSS font shorthand (e.g. "16px Arial") read from the
+ *   actual rendered input element via getComputedStyle. When omitted the
+ *   canvas context's default font is used, which may be inaccurate.
  */
 export const useMeasureContent = (options: MeasureContentOptions = {}) => {
   const {
-    fontSize = '1rem',
-    fontFamily = 'sans-serif',
-    padding = 20, // 10px on each side for .dsg-input
+    fontString,
+    padding = 20, // 10px on each side matching .dsg-input padding
     maxWidth = 400,
   } = options
 
@@ -50,12 +52,11 @@ export const useMeasureContent = (options: MeasureContentOptions = {}) => {
         return Math.min(estimatedWidth, maxWidth)
       }
 
-      // Set font to match the input element
-      // Convert rem to px (assuming 16px base)
-      const fontSizePx = fontSize.includes('rem')
-        ? parseFloat(fontSize) * 16
-        : parseFloat(fontSize)
-      context.font = `${fontSizePx}px ${fontFamily}`
+      // Apply the computed font from the real DOM element when available so
+      // measurements match what the user actually sees.
+      if (fontString) {
+        context.font = fontString
+      }
 
       // Measure the text
       const metrics = context.measureText(textContent)
@@ -66,6 +67,6 @@ export const useMeasureContent = (options: MeasureContentOptions = {}) => {
 
       return totalWidth
     },
-    [fontSize, fontFamily, padding, maxWidth]
+    [fontString, padding, maxWidth]
   )
 }
