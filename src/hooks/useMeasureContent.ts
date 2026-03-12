@@ -32,14 +32,14 @@ export const useMeasureContent = (options: MeasureContentOptions = {}) => {
 
       const textContent = String(text)
 
-      // Create canvas element if it doesn't exist
-      if (!canvasRef.current) {
+      // Create canvas element if it doesn't exist (skip in SSR environments)
+      if (!canvasRef.current && typeof document !== 'undefined') {
         canvasRef.current = document.createElement('canvas')
       }
 
       let context: CanvasRenderingContext2D | null = null
       try {
-        context = canvasRef.current.getContext('2d')
+        context = canvasRef.current?.getContext('2d') ?? null
       } catch (error) {
         // Canvas not supported (e.g., jsdom in tests)
         context = null
