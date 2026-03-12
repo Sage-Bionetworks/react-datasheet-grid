@@ -1837,7 +1837,7 @@ export const DataSheetGrid = React.memo(
         // but columns array includes gutter at index 0, so we need +1
         const column = columns[activeCell.col + 1]
         const rowData = data[activeCell.row]
-        if (!column || !columnWidths || !rowData) {
+        if (!column || !columnWidths || rowData === undefined) {
           return undefined
         }
         const cellValue = column.displayValue
