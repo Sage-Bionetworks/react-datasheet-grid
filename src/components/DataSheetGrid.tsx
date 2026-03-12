@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -42,6 +43,7 @@ import { getAllTabbableElements } from '../utils/tab'
 import { Grid } from './Grid'
 import { SelectionRect } from './SelectionRect'
 import { useRowHeights } from '../hooks/useRowHeights'
+import { useMeasureContent } from '../hooks/useMeasureContent'
 
 const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any, any>[] = []
@@ -103,6 +105,18 @@ export const DataSheetGrid = React.memo(
       const outerRef = useRef<HTMLDivElement>(null)
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
       const afterTabIndexRef = useRef<HTMLDivElement>(null)
+
+      // Read the computed font from a real .dsg-input element so Canvas
+      // measurements match the actual rendered text. Re-runs when data length
+      // changes so an initially-empty grid picks up the font once rows appear.
+      const [inputFont, setInputFont] = useState<string | undefined>(undefined)
+      useLayoutEffect(() => {
+        if (inputFont) return
+        const el = outerRef.current?.querySelector<HTMLElement>('.dsg-input')
+        if (el) {
+          setInputFont(getComputedStyle(el).font)
+        }
+      }, [data.length, inputFont])
 
       // Default value is 1 for the border
       const [heightDiff, setHeightDiff] = useDebounceState(1, 100)
@@ -1813,6 +1827,28 @@ export const DataSheetGrid = React.memo(
         columns,
       ])
 
+      // Calculate expanded width for active cell
+      const measureContent = useMeasureContent({ fontString: inputFont })
+      const activeCellExpandedWidth = useMemo(() => {
+        if (!activeCell || isCellDisabled(activeCell)) {
+          return undefined
+        }
+        // activeCell.col is 0-based for data columns (excludes gutter)
+        // but columns array includes gutter at index 0, so we need +1
+        const column = columns[activeCell.col + 1]
+        const rowData = data[activeCell.row]
+        if (!column || !columnWidths || rowData === undefined) {
+          return undefined
+        }
+        const cellValue = column.displayValue
+          ? column.displayValue({ rowData, rowIndex: activeCell.row })
+          : column.copyValue({ rowData, rowIndex: activeCell.row })
+        const contentWidth = measureContent(cellValue)
+        const currentWidth = columnWidths[activeCell.col + 1]
+        // Only expand if content is wider than current column
+        return contentWidth > currentWidth ? contentWidth : undefined
+      }, [activeCell, data, columns, columnWidths, measureContent, isCellDisabled])
+
       return (
         <div className={className} style={style}>
           <div
@@ -1848,6 +1884,7 @@ export const DataSheetGrid = React.memo(
             stopEditing={stopEditing}
             cellClassName={cellClassName}
             onScroll={onScroll}
+            activeCellExpandedWidth={activeCellExpandedWidth}
           >
             <SelectionRect
               columnRights={columnRights}
@@ -1867,6 +1904,7 @@ export const DataSheetGrid = React.memo(
               expandSelection={expandSelection}
               stickyLeftColumns={stickyLeftColumns}
               getStickyLeftOffset={getStickyLeftOffset}
+              activeCellExpandedWidth={activeCellExpandedWidth}
             />
           </Grid>
           <div

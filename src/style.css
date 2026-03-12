@@ -99,6 +99,19 @@
   background: var(--dsg-cell-disabled-background-color);
 }
 
+.dsg-cell-expanded {
+  /* Higher z-index to overlay adjacent cells, but below selection border (z-index: 20) */
+  z-index: 15;
+  /* Allow content to overflow into adjacent column space horizontally */
+  overflow: visible;
+}
+
+.dsg-cell-expanded .dsg-input {
+  /* Remove horizontal truncation so the full value is visible */
+  overflow: visible;
+  text-overflow: clip;
+}
+
 .dsg-cell-header,
 .dsg-cell-gutter {
   color: var(--dsg-header-text-color);
@@ -535,6 +548,10 @@
   padding: 0 10px;
   font-size: 1rem;
   outline: none;
+  /* Text truncation for content that exceeds cell width */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dsg-input-suffix {

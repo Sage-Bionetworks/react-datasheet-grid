@@ -55,6 +55,10 @@ export const keyColumn = <
   // Here we simply wrap all functions to only pass the value of the desired key to the column, and not the entire row
   copyValue: ({ rowData, rowIndex }) =>
     column.copyValue?.({ rowData: rowData[key], rowIndex }) ?? null,
+  displayValue: column.displayValue
+    ? ({ rowData, rowIndex }) =>
+        column.displayValue!({ rowData: rowData[key], rowIndex })
+    : undefined,
   deleteValue: ({ rowData, rowIndex }) => ({
     ...rowData,
     [key]: column.deleteValue?.({ rowData: rowData[key], rowIndex }) ?? null,

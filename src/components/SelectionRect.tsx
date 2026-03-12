@@ -39,7 +39,9 @@ const buildClipPath = (
     .join(',')})`
 }
 
-export const SelectionRect = React.memo<SelectionContextType>(
+export const SelectionRect = React.memo<
+  SelectionContextType & { activeCellExpandedWidth?: number }
+>(
   ({
     columnWidths,
     columnRights,
@@ -58,6 +60,7 @@ export const SelectionRect = React.memo<SelectionContextType>(
     expandSelection,
     stickyLeftColumns,
     getStickyLeftOffset,
+    activeCellExpandedWidth,
   }) => {
     const activeCellIsDisabled = activeCell ? isCellDisabled(activeCell) : false
 
@@ -90,7 +93,9 @@ export const SelectionRect = React.memo<SelectionContextType>(
     }
 
     const activeCellRect = activeCell && {
-      width: columnWidths[activeCell.col + 1] + extraPixelH(activeCell.col),
+      width: activeCellExpandedWidth
+        ? activeCellExpandedWidth + extraPixelH(activeCell.col)
+        : columnWidths[activeCell.col + 1] + extraPixelH(activeCell.col),
       height: rowHeight(activeCell.row).height + extraPixelV(activeCell.row),
       left: columnRights[activeCell.col],
       top: rowHeight(activeCell.row).top + headerRowHeight,

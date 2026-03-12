@@ -19,10 +19,10 @@ type Row = {
 
 function App() {
   const [data, setData] = useState<Row[]>([
-    { active: true, firstName: 'Elon', lastName: 'Musk', email: 'elon@tesla.com', company: 'Tesla', department: 'CEO' },
-    { active: false, firstName: 'Jeff', lastName: 'Bezos', email: 'jeff@amazon.com', company: 'Amazon', department: 'Founder' },
-    { active: true, firstName: 'Tim', lastName: 'Cook', email: 'tim@apple.com', company: 'Apple', department: 'CEO' },
-    { active: false, firstName: 'Sundar', lastName: 'Pichai', email: 'sundar@google.com', company: 'Google', department: 'CEO' },
+    { active: true, firstName: 'Elon', lastName: 'Musk', email: 'elon.musk@tesla-motors.com', company: 'Tesla', department: 'CEO' },
+    { active: false, firstName: 'Jeff', lastName: 'Bezos', email: 'jeff.bezos@amazon-web-services.com', company: 'Amazon', department: 'Founder' },
+    { active: true, firstName: 'Tim', lastName: 'Cook', email: 'tim.cook@apple-inc.com', company: 'Apple', department: 'CEO' },
+    { active: false, firstName: 'Sundar', lastName: 'Pichai', email: 'sundar.pichai@google.com', company: 'Google', department: 'CEO' },
   ])
 
   const columns: Column<Row>[] = [

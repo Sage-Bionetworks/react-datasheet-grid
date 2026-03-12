@@ -50,6 +50,7 @@ export type Column<T, C, PasteValue> = {
   keepFocus: boolean
   deleteValue: (opt: { rowData: T; rowIndex: number }) => T
   copyValue: (opt: { rowData: T; rowIndex: number }) => number | string | null
+  displayValue?: (opt: { rowData: T; rowIndex: number }) => number | string | null | undefined
   pasteValue: (opt: { rowData: T; value: PasteValue; rowIndex: number }) => T
   prePasteValues: (values: string[]) => PasteValue[] | Promise<PasteValue[]>
   isCellEmpty: (opt: { rowData: T; rowIndex: number }) => boolean
@@ -87,6 +88,7 @@ export type SimpleColumn<T, C> = Partial<
     | 'shrink'
     | 'component'
     | 'columnData'
+    | 'displayValue'
   >
 >
 

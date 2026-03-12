@@ -37,6 +37,7 @@ export const Grid = <T extends any>({
   insertRowAfter,
   stopEditing,
   onScroll,
+  activeCellExpandedWidth,
 }: {
   data: T[]
   columns: Column<T, any, any>[]
@@ -63,6 +64,7 @@ export const Grid = <T extends any>({
   insertRowAfter: (row: number, count?: number) => void
   stopEditing: (opts?: { nextRow?: boolean }) => void
   onScroll?: React.UIEventHandler<HTMLDivElement>
+  activeCellExpandedWidth?: number
 }) => {
   const rowVirtualizer = useVirtualizer({
     count: data.length,
@@ -280,6 +282,7 @@ export const Grid = <T extends any>({
                     )}
                     width={col.size}
                     left={isStickyLeft ? getStickyLeftOffset(col.index) : col.start}
+                    expandedWidth={cellIsActive ? activeCellExpandedWidth : undefined}
                   >
                     <Component
                       rowData={data[row.index]}
