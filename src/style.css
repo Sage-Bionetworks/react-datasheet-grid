@@ -537,6 +537,39 @@
   outline: none;
 }
 
+/* Fallback for browsers without field-sizing: expand active input to 3× column width. */
+@supports not (field-sizing: content) {
+  .dsg-input:focus {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 300%;
+    background: var(--dsg-cell-background-color);
+  }
+
+  .dsg-cell:has(.dsg-input:focus) {
+    overflow: visible;
+    z-index: 2;
+  }
+}
+
+/* Expand active cell inputs to content width when editing.
+   Browsers without field-sizing support get the 3× fallback above. */
+@supports (field-sizing: content) {
+  .dsg-input:focus {
+    field-sizing: content;
+    flex: none;
+    min-width: 100%;
+    background: var(--dsg-cell-background-color);
+  }
+
+  .dsg-cell:has(.dsg-input:focus) {
+    overflow: visible;
+    z-index: 2;
+  }
+}
+
 .dsg-input-suffix {
   padding-right: 10px;
   opacity: 0.5;
