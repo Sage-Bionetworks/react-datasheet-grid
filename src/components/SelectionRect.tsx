@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import cx from 'classnames'
 import { SelectionContextType } from '../types'
 
@@ -77,6 +77,26 @@ export const SelectionRect = React.memo<SelectionContextType>(
       return true
     }, [activeCellIsDisabled, isCellDisabled, selection])
 
+    // Track the actual rendered width of the focused input so the selection box
+    // follows when field-sizing: content expands it beyond the column width.
+    const [inputWidth, setInputWidth] = useState<number | null>(null)
+    useEffect(() => {
+      if (!editing) {
+        setInputWidth(null)
+        return
+      }
+      const input = document.activeElement
+      if (!(input instanceof HTMLElement) || !input.classList.contains('dsg-input')) {
+        setInputWidth(null)
+        return
+      }
+      const observer = new ResizeObserver(() => {
+        setInputWidth(input.getBoundingClientRect().width)
+      })
+      observer.observe(input)
+      return () => observer.disconnect()
+    }, [editing])
+
     if (!columnWidths || !columnRights) {
       return null
     }
@@ -90,7 +110,7 @@ export const SelectionRect = React.memo<SelectionContextType>(
     }
 
     const activeCellRect = activeCell && {
-      width: columnWidths[activeCell.col + 1] + extraPixelH(activeCell.col),
+      width: (inputWidth !== null ? inputWidth : columnWidths[activeCell.col + 1]) + extraPixelH(activeCell.col),
       height: rowHeight(activeCell.row).height + extraPixelV(activeCell.row),
       left: columnRights[activeCell.col],
       top: rowHeight(activeCell.row).top + headerRowHeight,

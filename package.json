@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git+https://github.com/sage-bionetworks/react-datasheet-grid.git"
   },
-  "version": "4.11.5-sage.6",
+  "version": "4.11.5-sage.8",
   "description": "An Excel-like React component to create beautiful spreadsheets.",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
