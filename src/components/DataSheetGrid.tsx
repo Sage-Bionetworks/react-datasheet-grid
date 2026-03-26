@@ -972,7 +972,17 @@ export const DataSheetGrid = React.memo(
             activeCell.row === cursorIndex.row &&
             !isCellDisabled(activeCell)
 
-          if (clickOnActiveCell && editing) {
+          // Also bail when the user clicks directly on the input element itself —
+          // this covers the case where a field-sizing-expanded input overflows into
+          // an adjacent column's space.  getCursorIndex maps the X coordinate to
+          // the adjacent column, so clickOnActiveCell would be false, but the click
+          // target is still our input and we must not steal focus or change selection.
+          const clickOnActiveInput =
+            editing &&
+            event.target instanceof HTMLElement &&
+            event.target.classList.contains('dsg-input')
+
+          if ((clickOnActiveCell || clickOnActiveInput) && editing) {
             return
           }
 
