@@ -90,6 +90,32 @@ describe('parseTextHtmlData', () => {
       ['foo"bar', 'foo/bar'],
     ])
   })
+
+  test('text in a <p> element (browser text selection) — currently returns empty (bug)', () => {
+    const longString = 'a'.repeat(200)
+    expect(
+      parseTextHtmlData(
+        `<html><body><p>${longString}</p></body></html>`
+      )
+    ).toEqual([[longString]])
+  })
+
+  test('text in a <div> element — currently returns empty (bug)', () => {
+    const longString = 'b'.repeat(150)
+    expect(
+      parseTextHtmlData(
+        `<html><body><div>${longString}</div></body></html>`
+      )
+    ).toEqual([[longString]])
+  })
+
+  test('plain body text without any wrapper element — currently returns empty (bug)', () => {
+    expect(
+      parseTextHtmlData(
+        '<html><body><meta charset="utf-8">hello world</body></html>'
+      )
+    ).toEqual([['hello world']])
+  })
 })
 
 describe('parsePlainTextData', () => {

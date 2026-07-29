@@ -25,7 +25,13 @@ export const parseTextHtmlData = (data: string): string[][] => {
     return [[span.textContent ?? '']]
   }
 
-  return [['']]
+  // Fall back to the full body text for HTML without a recognisable structure
+  // (e.g. text copied from a browser selection, a rich-text editor, or a web
+  // app that wraps content in <p> or <div> rather than <span> or <table>).
+  const body = doc.getElementsByTagName('body')[0]
+  const bodyText = (body ?? doc).textContent?.trim() ?? ''
+
+  return [[bodyText]]
 }
 
 export const parseTextPlainData = (data: string): string[][] => {
