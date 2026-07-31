@@ -537,39 +537,6 @@
   outline: none;
 }
 
-/* Shared cell rule for both expansion modes: the cell visually overflows but
-   contain:layout prevents that overflow from growing the scroll container,
-   which would otherwise trigger a spurious scrollTo → virtual-list remeasure
-   → active cell unmount before the typed value is committed. */
-.dsg-cell:has(.dsg-input:focus) {
-  contain: layout;
-  overflow: visible;
-  z-index: 2;
-}
-
-/* Fallback for browsers without field-sizing: expand active input to 3× column width. */
-@supports not (field-sizing: content) {
-  .dsg-input:focus {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 300%;
-    background: var(--dsg-cell-background-color);
-  }
-}
-
-/* Expand active cell inputs to content width when editing.
-   Browsers without field-sizing support get the 3× fallback above. */
-@supports (field-sizing: content) {
-  .dsg-input:focus {
-    field-sizing: content;
-    flex: none;
-    min-width: 100%;
-    background: var(--dsg-cell-background-color);
-  }
-}
-
 .dsg-input-suffix {
   padding-right: 10px;
   opacity: 0.5;
