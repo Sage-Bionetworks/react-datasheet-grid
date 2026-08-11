@@ -75,6 +75,19 @@
   display: none;
 }
 
+/* When the cell's input is focused and grows past the column width (see
+   .dsg-input:focus below), contain:layout stops that overflow from counting
+   toward the scroll container's scrollWidth/scrollHeight — without it, the
+   growth triggers a spurious scroll (native scroll-anchoring / virtualizer
+   remeasure) that can unmount the input mid-edit. The raised z-index lets the
+   overflowing content paint over neighboring cells and the (now fully
+   occluded, but still fixed-width) active-cell selection overlay. */
+.dsg-cell:has(.dsg-input:focus) {
+  contain: layout;
+  overflow: visible;
+  z-index: 56;
+}
+
 .dsg-cell-sticky-right {
   position: sticky;
   right: 0;
@@ -535,6 +548,42 @@
   padding: 0 10px;
   font-size: 1rem;
   outline: none;
+}
+
+/* Expand the focused input to fit its content instead of truncating it.
+   box-shadow (not border) draws the "selected" ring so the input's box model
+   used for field-sizing's content measurement stays untouched, and so the
+   ring never contributes to scrollable/layout overflow (only border and
+   in-flow content do; box-shadow is paint-only). */
+@supports (field-sizing: content) {
+  .dsg-input:focus {
+    field-sizing: content;
+    flex: none;
+    min-width: 100%;
+    background: var(--dsg-cell-background-color);
+    border-radius: var(--dsg-selection-border-radius);
+    box-shadow: 0 0 0 var(--dsg-selection-border-width)
+        var(--dsg-selection-border-color),
+      0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Fallback for browsers without field-sizing: expand to 3x the column width
+   instead of fitting content exactly (no way to measure intrinsic width
+   without it). */
+@supports not (field-sizing: content) {
+  .dsg-input:focus {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 300%;
+    background: var(--dsg-cell-background-color);
+    border-radius: var(--dsg-selection-border-radius);
+    box-shadow: 0 0 0 var(--dsg-selection-border-width)
+        var(--dsg-selection-border-color),
+      0 2px 5px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .dsg-input-suffix {
