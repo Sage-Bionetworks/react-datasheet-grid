@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, Page, Locator } from '@playwright/test'
 
 const LONG_VALUE = 'A very long first name that is much wider than the column'
 
@@ -9,13 +9,15 @@ test.describe('cell expansion on focus', () => {
     await expect(page.locator('.dsg-row')).toHaveCount(5, { timeout: 5000 }) // header + 4 data rows
   })
 
-  const getFirstNameCell = (page: import('@playwright/test').Page) => {
-    // Grid columns: gutter | Active (checkbox, pinned) | First name | Last name | Email | Company | Department
-    const rows = page
-      .locator('.dsg-row')
-      .filter({ hasNot: page.locator('.dsg-row-header') })
-    return rows.first().locator('.dsg-cell').nth(2)
-  }
+  // A plain CSS :not() selector rather than .filter({ hasNot: ... }) —
+  // the latter can report stale/empty matches once a descendant (like the
+  // portaled textarea) has been moved in and out of the DOM via
+  // createPortal, independent of React's normal render cycle.
+  const dataRows = (page: Page) => page.locator('.dsg-row:not(.dsg-row-header)')
+
+  // Grid columns: gutter | Active (checkbox, pinned) | First name | Last name | Email | Company | Department
+  const getFirstNameCell = (page: Page, rowIndex = 0) =>
+    dataRows(page).nth(rowIndex).locator('.dsg-cell').nth(2)
 
   // Selecting a cell and then typing starts editing (standard spreadsheet
   // behavior, replacing the existing value) — this is used instead of
@@ -23,13 +25,77 @@ test.describe('cell expansion on focus', () => {
   // events can arrive faster than React re-renders activeCell between them,
   // so the click-tracking logic never recognizes it as landing on an
   // already-active cell.
-  const startEditingWith = async (
-    cell: ReturnType<typeof getFirstNameCell>,
-    value: string
-  ) => {
+  const startEditingWith = async (cell: Locator, value: string) => {
     await cell.click()
     await cell.page().keyboard.type(value)
   }
+
+  const activeInputRect = (page: Page) =>
+    page.evaluate(() => {
+      const rect = (document.activeElement as HTMLElement).getBoundingClientRect()
+      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+    })
+
+  test('a resting (non-active) cell keeps its text vertically centered', async ({
+    page,
+  }) => {
+    // The editable element is a <textarea> (needed so an expanded value can
+    // wrap), which — unlike <input> — doesn't center single-line text
+    // within a taller box on its own; centering has to come from how it's
+    // laid out at rest.
+    const { cellRect, textareaRect } = await page.evaluate(() => {
+      const cell = document
+        .querySelectorAll('.dsg-row:not(.dsg-row-header)')[0]
+        .querySelectorAll('.dsg-cell')[2]
+      const textarea = cell.querySelector('textarea')!
+      const c = cell.getBoundingClientRect()
+      const t = textarea.getBoundingClientRect()
+      return {
+        cellRect: { top: c.top, height: c.height },
+        textareaRect: { top: t.top, height: t.height },
+      }
+    })
+    const cellCenter = cellRect.top + cellRect.height / 2
+    const textareaCenter = textareaRect.top + textareaRect.height / 2
+    // Within a couple of pixels — box-model rounding, not a precise match.
+    expect(Math.abs(textareaCenter - cellCenter)).toBeLessThanOrEqual(1)
+  })
+
+  test('an active or editing cell with a short (existing) value stays vertically centered', async ({
+    page,
+  }) => {
+    // Regression test: a <textarea> always top-aligns its own text within
+    // its own box. Forcing that box to the cell's full height (e.g. via
+    // min-height) makes a short value sit at the top of it instead of
+    // centered — vertical centering only works if the textarea is left to
+    // its natural (short) height and centered by its wrapper instead.
+    const firstNameCell = getFirstNameCell(page)
+    const cellRect = (await firstNameCell.boundingBox())!
+    const cellCenter = cellRect.y + cellRect.height / 2
+
+    const assertCenteredAndNatural = async () => {
+      const rect = await page.evaluate(() => {
+        // Active cell's textarea is portaled: find the one holding "Elon"
+        // rather than relying on document.activeElement (not focused yet
+        // in the "active but not editing" case).
+        const textareas = Array.from(document.querySelectorAll('textarea.dsg-input'))
+        const el = textareas.find((t) => (t as HTMLTextAreaElement).value === 'Elon')!
+        const r = el.getBoundingClientRect()
+        return { y: r.y, height: r.height }
+      })
+      // The textarea's own box should be close to its natural single-line
+      // height, not stretched to the (much taller) cell.
+      expect(rect.height).toBeLessThan(cellRect.height * 0.75)
+      expect(Math.abs(rect.y + rect.height / 2 - cellCenter)).toBeLessThanOrEqual(2)
+    }
+
+    await firstNameCell.click() // active, not yet editing
+    await assertCenteredAndNatural()
+
+    await page.keyboard.press('Enter') // now editing
+    await expect(page.locator('.dsg-input:focus')).toBeVisible()
+    await assertCenteredAndNatural()
+  })
 
   test('typing a long value does not move the container scroll position', async ({
     page,
@@ -68,7 +134,7 @@ test.describe('cell expansion on focus', () => {
     // Sanity check: the input is still focused (never unmounted mid-edit)
     // and holds the full value we typed.
     const activeValue = await page.evaluate(
-      () => (document.activeElement as HTMLInputElement).value
+      () => (document.activeElement as HTMLTextAreaElement).value
     )
     expect(activeValue).toBe(LONG_VALUE)
 
@@ -78,28 +144,102 @@ test.describe('cell expansion on focus', () => {
       CSS.supports('field-sizing', 'content')
     )
     if (supported) {
-      const inputWidth = await page.evaluate(
-        () => (document.activeElement as HTMLElement).getBoundingClientRect().width
-      )
+      const inputWidth = (await activeInputRect(page)).width
       expect(inputWidth).toBeGreaterThan(columnWidth)
     }
   })
 
-  test('expanded cell overlays neighboring cells without changing container scrollWidth', async ({
+  test("expanding a cell never changes the container's scrollWidth/scrollHeight", async ({
     page,
   }) => {
+    // The expanded value is rendered in a position: fixed portal to
+    // document.body, so it's never a descendant of .dsg-container and can
+    // never affect its scrollable area, regardless of how large it grows.
     const container = page.locator('.dsg-container')
-    const scrollWidthBefore = await container.evaluate((el) => el.scrollWidth)
+    const before = await container.evaluate((el) => ({
+      sw: el.scrollWidth,
+      sh: el.scrollHeight,
+    }))
 
+    const firstNameCell = getFirstNameCell(page)
+    await startEditingWith(firstNameCell, Array(60).fill('word').join(' '))
+    await expect(page.locator('.dsg-input:focus')).toBeVisible()
+
+    const after = await container.evaluate((el) => ({
+      sw: el.scrollWidth,
+      sh: el.scrollHeight,
+    }))
+    expect(after).toEqual(before)
+  })
+
+  test('the expanded input is portaled outside the scrollable container, not clipped by it', async ({
+    page,
+  }) => {
     const firstNameCell = getFirstNameCell(page)
     await startEditingWith(firstNameCell, LONG_VALUE)
     await expect(page.locator('.dsg-input:focus')).toBeVisible()
 
-    const scrollWidthAfter = await container.evaluate((el) => el.scrollWidth)
-    expect(scrollWidthAfter).toBe(scrollWidthBefore)
+    const isInsideContainer = await page.evaluate(() =>
+      Boolean(document.activeElement?.closest('.dsg-container'))
+    )
+    expect(isInsideContainer).toBe(false)
   })
 
-  test('clicking on the overflowing part of the focused input keeps it in edit mode', async ({
+  test('a cell near the bottom edge of the grid expands fully instead of being clipped', async ({
+    page,
+  }) => {
+    const containerBox = (await page.locator('.dsg-container').boundingBox())!
+    const lastRowCell = getFirstNameCell(page, 3) // last of the 4 demo rows
+
+    await startEditingWith(lastRowCell, Array(40).fill('word').join(' '))
+    await expect(page.locator('.dsg-input:focus')).toBeVisible()
+    // Let field-sizing settle on its final (wrapped, multi-line) height.
+    await expect
+      .poll(async () => (await activeInputRect(page)).height)
+      .toBeGreaterThan(40)
+
+    const rect = await activeInputRect(page)
+    const containerBottom = containerBox.y + containerBox.height
+
+    // The expanded popup genuinely extends past the grid's own bottom edge...
+    expect(rect.y + rect.height).toBeGreaterThan(containerBottom)
+
+    // ...and a point in that overflow area actually renders the textarea
+    // (not clipped/hidden by the grid), confirmed via real hit-testing.
+    const hitElementIsTextarea = await page.evaluate(
+      ([x, y]) => {
+        const el = document.elementFromPoint(x, y)
+        return el?.tagName === 'TEXTAREA' && el.classList.contains('dsg-input')
+      },
+      [rect.x + 10, containerBottom + 5]
+    )
+    expect(hitElementIsTextarea).toBe(true)
+  })
+
+  test('scrolling the grid while editing keeps the expanded popup aligned with the cell', async ({
+    page,
+  }) => {
+    const container = page.locator('.dsg-container')
+    const firstNameCell = getFirstNameCell(page)
+    await startEditingWith(firstNameCell, Array(20).fill('word').join(' '))
+    await expect(page.locator('.dsg-input:focus')).toBeVisible()
+
+    const before = await activeInputRect(page)
+
+    await container.evaluate((el) => {
+      el.scrollLeft = 30
+    })
+    // Position tracking runs on a requestAnimationFrame loop; give it a
+    // couple of frames to catch up.
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+    )
+
+    const after = await activeInputRect(page)
+    expect(before.x - after.x).toBeCloseTo(30, 0)
+  })
+
+  test('clicking on the overflowing part of the expanded input keeps it in edit mode', async ({
     page,
   }) => {
     const supported = await page.evaluate(() =>
@@ -113,11 +253,7 @@ test.describe('cell expansion on focus', () => {
     await startEditingWith(firstNameCell, LONG_VALUE)
     await expect(page.locator('.dsg-input:focus')).toBeVisible()
 
-    const inputBox = await page.evaluate(() => {
-      const el = document.activeElement as HTMLElement
-      const rect = el.getBoundingClientRect()
-      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
-    })
+    const inputBox = await activeInputRect(page)
     expect(inputBox.width).toBeGreaterThan(columnBox.width)
 
     // Click near the right edge of the now-wider input, past where the
@@ -130,23 +266,97 @@ test.describe('cell expansion on focus', () => {
 
     await expect(page.locator('.dsg-input:focus')).toBeVisible()
     const activeValue = await page.evaluate(
-      () => (document.activeElement as HTMLInputElement).value
+      () => (document.activeElement as HTMLTextAreaElement).value
     )
     expect(activeValue).toBe(LONG_VALUE)
   })
 
-  test('cell with focused input raises above the active-cell selection overlay', async ({
+  test('clicking away from an expanded cell commits the value', async ({
     page,
   }) => {
     const firstNameCell = getFirstNameCell(page)
-    await startEditingWith(firstNameCell, 'some text')
+    await startEditingWith(firstNameCell, LONG_VALUE)
     await expect(page.locator('.dsg-input:focus')).toBeVisible()
 
-    const zIndex = await page.evaluate(() => {
-      const input = document.activeElement
-      const cell = input?.closest('.dsg-cell')
-      return cell ? window.getComputedStyle(cell).zIndex : null
+    // A cell in a different row so it can't possibly sit under the
+    // expanded popup's visual footprint — clicking a cell the popup
+    // visually covers is expected to keep editing (same as clicking the
+    // input itself), which is exercised separately above.
+    const otherCell = dataRows(page).nth(1).locator('.dsg-cell').nth(3) // Last name, row 2
+    await otherCell.click()
+    await expect(page.locator('.dsg-input:focus')).not.toBeVisible()
+
+    const committedValue = await firstNameCell.locator('textarea').inputValue()
+    expect(committedValue).toBe(LONG_VALUE)
+  })
+
+  test('Enter confirms the value instead of inserting a newline', async ({
+    page,
+  }) => {
+    const firstNameCell = getFirstNameCell(page)
+    await startEditingWith(firstNameCell, 'foo')
+    await page.keyboard.press('Enter')
+
+    // Editing ended (moved to the next row) rather than inserting a \n.
+    await expect(page.locator('.dsg-input:focus')).not.toBeVisible()
+
+    const value = await firstNameCell.locator('textarea').inputValue()
+    expect(value).toBe('foo')
+  })
+
+  test.describe('wrapping (grow wide, then wrap and grow tall)', () => {
+    test('a long value grows wide up to the max-width cap, then wraps and grows taller', async ({
+      page,
+    }) => {
+      const supported = await page.evaluate(() =>
+        CSS.supports('field-sizing', 'content')
+      )
+      test.skip(!supported, 'field-sizing not supported in this browser')
+
+      const firstNameCell = getFirstNameCell(page)
+      const cellHeight = (await firstNameCell.boundingBox())!.height
+
+      // Long enough to force wrapping onto multiple lines even once capped
+      await startEditingWith(firstNameCell, Array(40).fill('word').join(' '))
+
+      const rect = await activeInputRect(page)
+      const maxWidth = await page.evaluate(() =>
+        parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            '--dsg-cell-expanded-max-width'
+          )
+        )
+      )
+
+      expect(rect.width).toBeCloseTo(maxWidth, 0)
+      expect(rect.height).toBeGreaterThan(cellHeight)
     })
-    expect(Number(zIndex)).toBeGreaterThan(55)
+
+    test('an extremely long value is capped at max-height and scrolls internally', async ({
+      page,
+    }) => {
+      const supported = await page.evaluate(() =>
+        CSS.supports('field-sizing', 'content')
+      )
+      test.skip(!supported, 'field-sizing not supported in this browser')
+
+      const firstNameCell = getFirstNameCell(page)
+      await startEditingWith(firstNameCell, Array(120).fill('word').join(' '))
+
+      const maxHeight = await page.evaluate(() =>
+        parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            '--dsg-cell-expanded-max-height'
+          )
+        )
+      )
+      const rect = await activeInputRect(page)
+      expect(rect.height).toBeLessThanOrEqual(maxHeight + 1)
+
+      const overflowY = await page.evaluate(
+        () => getComputedStyle(document.activeElement as Element).overflowY
+      )
+      expect(overflowY).toBe('auto')
+    })
   })
 })
