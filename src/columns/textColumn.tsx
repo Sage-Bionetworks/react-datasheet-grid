@@ -1,4 +1,5 @@
-import React, { useEffect, useLayoutEffect, useRef } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { CellComponent, CellProps, Column } from '../types'
 import cx from 'classnames'
 import { useFirstRender } from '../hooks/useFirstRender'
@@ -31,6 +32,8 @@ type TextColumnData<T> = {
   formatInputOnFocus: (value: T) => string
 }
 
+type Rect = { top: number; left: number; width: number; height: number }
+
 const TextComponent = React.memo<
   CellProps<string | null, TextColumnData<string | null>>
 >(
@@ -48,8 +51,36 @@ const TextComponent = React.memo<
       continuousUpdates,
     },
   }) => {
-    const ref = useRef<HTMLInputElement>(null)
+    const ref = useRef<HTMLTextAreaElement>(null)
     const firstRender = useFirstRender()
+
+    const [anchor, setAnchor] = useState<HTMLDivElement | null>(null)
+    const [popupRect, setPopupRect] = useState<Rect | null>(null)
+
+    useLayoutEffect(() => {
+      if (!active || !anchor) {
+        setPopupRect(null)
+        return
+      }
+
+      let rafId: number
+      const update = () => {
+        const rect = anchor.getBoundingClientRect()
+        setPopupRect((prev) =>
+          prev &&
+          prev.top === rect.top &&
+          prev.left === rect.left &&
+          prev.width === rect.width &&
+          prev.height === rect.height
+            ? prev
+            : { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+        )
+        rafId = requestAnimationFrame(update)
+      }
+      update()
+
+      return () => cancelAnimationFrame(rafId)
+    }, [active, anchor])
 
     // We create refs for async access so we don't have to add it to the useEffect dependencies
     const asyncRef = useRef({
@@ -67,6 +98,7 @@ const TextComponent = React.memo<
       // This allows us to keep track of whether or not the user blurred the input using the Esc key
       // If the Esc key is used we do not update the row's value (only relevant when continuousUpdates is false)
       escPressed: false,
+      currentValue: formatBlurredInput(rowData),
     })
     asyncRef.current = {
       rowData,
@@ -80,6 +112,7 @@ const TextComponent = React.memo<
       focusedAt: asyncRef.current.focusedAt,
       changedAt: asyncRef.current.changedAt,
       escPressed: asyncRef.current.escPressed,
+      currentValue: asyncRef.current.currentValue,
     }
 
     useLayoutEffect(() => {
@@ -89,9 +122,11 @@ const TextComponent = React.memo<
       if (focus) {
         if (ref.current) {
           // Make sure to first format the input
-          ref.current.value = asyncRef.current.formatInputOnFocus(
+          const formatted = asyncRef.current.formatInputOnFocus(
             asyncRef.current.rowData
           )
+          ref.current.value = formatted
+          asyncRef.current.currentValue = formatted
           ref.current.focus()
           ref.current.select()
         }
@@ -104,36 +139,45 @@ const TextComponent = React.memo<
       // When the cell looses focus (by pressing Esc, Enter, clicking away...) we make sure to blur the input
       // Otherwise the user would still see the cursor blinking
       else {
-        if (ref.current) {
-          // Update the row's value on blur only if the user did not press escape (only relevant when continuousUpdates is false)
-          if (
-            !asyncRef.current.escPressed &&
-            !asyncRef.current.continuousUpdates &&
-            !asyncRef.current.firstRender &&
-            // Make sure that focus was gained more than 10 ms ago, used to prevent flickering
-            asyncRef.current.changedAt >= asyncRef.current.focusedAt
-          ) {
-            asyncRef.current.setRowData(
-              asyncRef.current.parseUserInput(ref.current.value)
-            )
-          }
-          ref.current.blur()
+        // Update the row's value on blur only if the user did not press escape (only relevant when continuousUpdates is false)
+        if (
+          !asyncRef.current.escPressed &&
+          !asyncRef.current.continuousUpdates &&
+          !asyncRef.current.firstRender &&
+          // Make sure that focus was gained more than 10 ms ago, used to prevent flickering
+          asyncRef.current.changedAt >= asyncRef.current.focusedAt
+        ) {
+          asyncRef.current.setRowData(
+            asyncRef.current.parseUserInput(asyncRef.current.currentValue)
+          )
         }
+        ref.current?.blur()
       }
     }, [focus])
 
     useEffect(() => {
       if (!focus && ref.current) {
         // On blur or when the data changes, format it for display
-        ref.current.value = asyncRef.current.formatBlurredInput(rowData)
+        const formatted = asyncRef.current.formatBlurredInput(rowData)
+        ref.current.value = formatted
+        asyncRef.current.currentValue = formatted
       }
     }, [focus, rowData])
 
-    return (
-      <input
+    const floating = Boolean(focus && popupRect)
+
+    const textarea = (
+      <textarea
+        // A <textarea> (rather than <input>) is what lets the expanded
+        // value wrap onto multiple lines instead of just growing wider.
+        rows={1}
         // We use an uncontrolled component for better performance
         defaultValue={formatBlurredInput(rowData)}
-        className={cx('dsg-input', alignRight && 'dsg-input-align-right')}
+        className={cx(
+          'dsg-input',
+          alignRight && 'dsg-input-align-right',
+          floating && 'dsg-input-floating'
+        )}
         placeholder={active ? placeholder : undefined}
         // Important to prevent any undesired "tabbing"
         tabIndex={-1}
@@ -141,9 +185,18 @@ const TextComponent = React.memo<
         // Make sure that while the cell is not focus, the user cannot interact with the input
         // The cursor will not change to "I", the style of the input will not change,
         // and the user cannot click and edit the input (this part is handled by DataSheetGrid itself)
-        style={{ pointerEvents: focus ? 'auto' : 'none' }}
+        style={
+          popupRect
+            ? {
+                pointerEvents: focus ? 'auto' : 'none',
+                minWidth: popupRect.width,
+                ...(!floating && { width: popupRect.width }),
+              }
+            : { pointerEvents: focus ? 'auto' : 'none' }
+        }
         onChange={(e) => {
           asyncRef.current.changedAt = Date.now()
+          asyncRef.current.currentValue = e.target.value
 
           // Only update the row's value as the user types if continuousUpdates is true
           if (continuousUpdates) {
@@ -155,8 +208,41 @@ const TextComponent = React.memo<
           if (e.key === 'Escape') {
             asyncRef.current.escPressed = true
           }
+
+          // A <textarea> would otherwise insert a literal newline — instead
+          // keep Enter's existing meaning (confirm the value, move to the
+          // next row). This only stops the browser's default action; the
+          // keydown still bubbles up to the grid's own handler.
+          if (e.key === 'Enter') {
+            e.preventDefault()
+          }
         }}
       />
+    )
+
+    const popup = popupRect && (
+      <div
+        className={cx(focus && 'dsg-input-floating-wrapper')}
+        style={{
+          position: 'fixed',
+          top: popupRect.top,
+          left: popupRect.left,
+          minHeight: popupRect.height,
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          pointerEvents: 'none',
+        }}
+      >
+        {textarea}
+      </div>
+    )
+
+    return (
+      <>
+        <div ref={setAnchor} className="dsg-input-anchor" />
+        {anchor && createPortal(active ? popup : textarea, active ? document.body : anchor)}
+      </>
     )
   }
 )
