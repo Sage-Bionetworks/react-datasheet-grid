@@ -99,6 +99,9 @@ export const parseTextPlainData = (data: string): string[][] => {
   return output
 }
 
+export const quoteTsvCell = (value: string): string =>
+  /[\t\n\r"]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
+
 export const encodeHtml = (str: string) => {
   return str
     .replace(/&/g, '&amp;')

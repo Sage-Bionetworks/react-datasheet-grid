@@ -31,6 +31,7 @@ import {
   isPrintableUnicode,
   parseTextHtmlData,
   parseTextPlainData,
+  quoteTsvCell,
 } from '../utils/copyPasting'
 import {
   getCell,
@@ -670,7 +671,11 @@ export const DataSheetGrid = React.memo(
               }
             }
 
-            const textPlain = copyData.map((row) => row.join('\t')).join('\n')
+            const textPlain = copyData
+              .map((row) =>
+                row.map((cell) => quoteTsvCell(String(cell ?? ''))).join('\t')
+              )
+              .join('\n')
             const textHtml = `<table>${copyData
               .map(
                 (row) =>
@@ -972,11 +977,6 @@ export const DataSheetGrid = React.memo(
             activeCell.row === cursorIndex.row &&
             !isCellDisabled(activeCell)
 
-          // Also bail when the user clicks directly on the input element itself —
-          // this covers the case where a field-sizing-expanded input overflows into
-          // an adjacent column's space.  getCursorIndex maps the X coordinate to
-          // the adjacent column, so clickOnActiveCell would be false, but the click
-          // target is still our input and we must not steal focus or change selection.
           const clickOnActiveInput =
             editing &&
             event.target instanceof HTMLElement &&
@@ -1500,7 +1500,8 @@ export const DataSheetGrid = React.memo(
             !event.ctrlKey &&
             !event.metaKey &&
             !event.altKey &&
-            event.shiftKey
+            event.shiftKey &&
+            !editing
           ) {
             insertRowAfter(selection?.max.row || activeCell.row)
           } else if (
