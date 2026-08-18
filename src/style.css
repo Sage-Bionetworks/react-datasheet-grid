@@ -553,8 +553,8 @@
 
 .dsg-input-floating {
   field-sizing: content;
-  max-width: var(--dsg-cell-expanded-max-width);
-  max-height: var(--dsg-cell-expanded-max-height);
+  max-width: var(--dsg-cell-expanded-max-width, 480px);
+  max-height: var(--dsg-cell-expanded-max-height, 300px);
   white-space: pre-wrap;
   overflow-wrap: break-word;
   overflow-y: auto;

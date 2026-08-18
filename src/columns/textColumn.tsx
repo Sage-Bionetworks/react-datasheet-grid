@@ -32,7 +32,36 @@ type TextColumnData<T> = {
   formatInputOnFocus: (value: T) => string
 }
 
-type Rect = { top: number; left: number; width: number; height: number }
+type Rect = {
+  top: number
+  left: number
+  width: number
+  height: number
+  maxWidth: number
+  maxHeight: number
+}
+
+// Mirrors the defaults style.css sets on --dsg-cell-expanded-max-width/
+// height — used as the fallback if that CSS variable can't be read (see
+// below for why that can happen).
+const DEFAULT_MAX_WIDTH = 480
+const DEFAULT_MAX_HEIGHT = 300
+
+// Keeps the popup from ever growing past the edge of the viewport
+export const clampMaxSize = (
+  cellSize: number,
+  cellPosition: number,
+  configuredMax: number,
+  viewportSize: number,
+  margin: number
+): number =>
+  Math.max(
+    0,
+    Math.min(
+      Math.max(cellSize, configuredMax),
+      viewportSize - cellPosition - margin
+    )
+  )
 
 const TextComponent = React.memo<
   CellProps<string | null, TextColumnData<string | null>>
@@ -63,17 +92,52 @@ const TextComponent = React.memo<
         return
       }
 
+      const rootStyle = getComputedStyle(document.documentElement)
+      const configuredMaxWidth =
+        parseFloat(
+          rootStyle.getPropertyValue('--dsg-cell-expanded-max-width')
+        ) || DEFAULT_MAX_WIDTH
+      const configuredMaxHeight =
+        parseFloat(
+          rootStyle.getPropertyValue('--dsg-cell-expanded-max-height')
+        ) || DEFAULT_MAX_HEIGHT
+      // Small buffer so the popup never touches the very edge of the window.
+      const viewportMargin = 8
+
       let rafId: number
       const update = () => {
         const rect = anchor.getBoundingClientRect()
+        const maxWidth = clampMaxSize(
+          rect.width,
+          rect.left,
+          configuredMaxWidth,
+          window.innerWidth,
+          viewportMargin
+        )
+        const maxHeight = clampMaxSize(
+          rect.height,
+          rect.top,
+          configuredMaxHeight,
+          window.innerHeight,
+          viewportMargin
+        )
         setPopupRect((prev) =>
           prev &&
           prev.top === rect.top &&
           prev.left === rect.left &&
           prev.width === rect.width &&
-          prev.height === rect.height
+          prev.height === rect.height &&
+          prev.maxWidth === maxWidth &&
+          prev.maxHeight === maxHeight
             ? prev
-            : { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+            : {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+                maxWidth,
+                maxHeight,
+              }
         )
         rafId = requestAnimationFrame(update)
       }
@@ -189,8 +253,15 @@ const TextComponent = React.memo<
           popupRect
             ? {
                 pointerEvents: focus ? 'auto' : 'none',
-                minWidth: popupRect.width,
-                ...(!floating && { width: popupRect.width }),
+                minWidth: floating
+                  ? Math.min(popupRect.width, popupRect.maxWidth)
+                  : popupRect.width,
+                ...(floating
+                  ? {
+                      maxWidth: popupRect.maxWidth,
+                      maxHeight: popupRect.maxHeight,
+                    }
+                  : { width: popupRect.width }),
               }
             : { pointerEvents: focus ? 'auto' : 'none' }
         }

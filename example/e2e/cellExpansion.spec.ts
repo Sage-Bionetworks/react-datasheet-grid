@@ -216,6 +216,64 @@ test.describe('cell expansion on focus', () => {
     expect(hitElementIsTextarea).toBe(true)
   })
 
+  test('a cell near the edge of the browser window is clamped to stay fully on screen', async ({
+    page,
+  }) => {
+    // Narrow enough that --dsg-cell-expanded-max-width (480px) would push
+    // the popup off the right edge if it weren't clamped further.
+    await page.setViewportSize({ width: 700, height: 600 })
+
+    const container = page.locator('.dsg-container')
+    await container.evaluate((el) => {
+      el.scrollLeft = el.scrollWidth
+    })
+
+    const rows = dataRows(page)
+    const cellCount = await rows.first().locator('.dsg-cell').count()
+    const lastCell = rows.first().locator('.dsg-cell').nth(cellCount - 1)
+
+    await startEditingWith(lastCell, Array(60).fill('word').join(' '))
+    await expect(page.locator('.dsg-input:focus')).toBeVisible()
+    await expect
+      .poll(async () => (await activeInputRect(page)).width)
+      .toBeGreaterThan((await lastCell.boundingBox())!.width)
+
+    const rect = await activeInputRect(page)
+    expect(rect.x + rect.width).toBeLessThanOrEqual(700)
+    expect(rect.y + rect.height).toBeLessThanOrEqual(600)
+  })
+
+  test('still wraps at a sensible width if --dsg-cell-expanded-max-width is missing', async ({
+    page,
+  }) => {
+    // Regression test: nothing in the stylesheet references
+    // --dsg-cell-expanded-max-width/height via var() anymore (that's read
+    // in JS instead), which makes the :root declaration a candidate for a
+    // CSS-purging build step to strip as "unused". Falling back to
+    // Infinity in that case would mean the popup only stops growing at the
+    // edge of the viewport instead of wrapping at a reasonable width.
+    await page.addStyleTag({
+      content:
+        ':root { --dsg-cell-expanded-max-width: initial; --dsg-cell-expanded-max-height: initial; }',
+    })
+    const configuredValue = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue(
+        '--dsg-cell-expanded-max-width'
+      )
+    )
+    expect(configuredValue).toBe('')
+
+    const firstNameCell = getFirstNameCell(page)
+    await startEditingWith(firstNameCell, Array(80).fill('word').join(' '))
+    await expect(page.locator('.dsg-input:focus')).toBeVisible()
+    await expect
+      .poll(async () => (await activeInputRect(page)).height)
+      .toBeGreaterThan(40)
+
+    const rect = await activeInputRect(page)
+    expect(rect.width).toBeLessThanOrEqual(481)
+  })
+
   test('scrolling the grid while editing keeps the expanded popup aligned with the cell', async ({
     page,
   }) => {
