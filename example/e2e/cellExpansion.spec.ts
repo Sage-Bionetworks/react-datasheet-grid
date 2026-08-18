@@ -362,6 +362,33 @@ test.describe('cell expansion on focus', () => {
     expect(value).toBe('foo')
   })
 
+  test('Shift+Enter inserts a newline and stays in edit mode instead of inserting a row', async ({
+    page,
+  }) => {
+    const rowCountBefore = await dataRows(page).count()
+
+    const firstNameCell = getFirstNameCell(page)
+    await startEditingWith(firstNameCell, 'line1')
+    await page.keyboard.press('Shift+Enter')
+    await page.keyboard.type('line2')
+
+    await expect(page.locator('.dsg-input:focus')).toBeVisible()
+    const value = await page.evaluate(
+      () => (document.activeElement as HTMLTextAreaElement).value
+    )
+    expect(value).toBe('line1\nline2')
+
+    // Shift+Enter's other existing meaning (insert a row below) shouldn't
+    // also fire while editing.
+    expect(await dataRows(page).count()).toBe(rowCountBefore)
+
+    await page.keyboard.press('Enter')
+    await expect(page.locator('.dsg-input:focus')).not.toBeVisible()
+    expect(await firstNameCell.locator('textarea').inputValue()).toBe(
+      'line1\nline2'
+    )
+  })
+
   test.describe('wrapping (grow wide, then wrap and grow tall)', () => {
     test('a long value grows wide up to the max-width cap, then wraps and grows taller', async ({
       page,
