@@ -4,6 +4,7 @@ import {
   parseTextHtmlData,
   encodeHtml,
   isPrintableUnicode,
+  quoteTsvCell,
 } from './copyPasting'
 import { JSDOM } from 'jsdom'
 
@@ -157,6 +158,18 @@ describe('parsePlainTextData', () => {
     ])
   })
 
+  test('multi-row, multi-column paste with a multi-line cell mixed in among plain cells', () => {
+    // A multi-line cell's embedded newline must not be mistaken for a row
+    // break, and must not throw off the column alignment of the plain
+    // single-line cells surrounding it.
+    expect(
+      parseTextPlainData('foo\t"bar\nbaz"\nqux\tquux')
+    ).toEqual([
+      ['foo', 'bar\nbaz'],
+      ['qux', 'quux'],
+    ])
+  })
+
   test('quoted first cell', () => {
     expect(parseTextPlainData('"foo\nbar')).toEqual([['"foo'], ['bar']])
   })
@@ -169,6 +182,26 @@ describe('parsePlainTextData', () => {
     expect(parseTextPlainData('"foo\tbar"')).toEqual([['"foo', 'bar"']])
     expect(parseTextPlainData('"foo"\t"bar"')).toEqual([['"foo"', '"bar"']])
   })
+})
+
+describe('quoteTsvCell', () => {
+  test('leaves plain values untouched', () => {
+    expect(quoteTsvCell('foo')).toBe('foo')
+    expect(quoteTsvCell('')).toBe('')
+  })
+
+  test('quotes and escapes values containing a tab, newline, or quote', () => {
+    expect(quoteTsvCell('foo\tbar')).toBe('"foo\tbar"')
+    expect(quoteTsvCell('foo\nbar')).toBe('"foo\nbar"')
+    expect(quoteTsvCell('foo"bar')).toBe('"foo""bar"')
+  })
+
+  test('round-trips a multi-line cell value (e.g. from Shift+Enter) through parseTextPlainData', () => {
+    const value = 'line1\nline2'
+    const row = [quoteTsvCell(value), quoteTsvCell('next cell')].join('\t')
+    expect(parseTextPlainData(row)).toEqual([[value, 'next cell']])
+  })
+
 })
 
 test('encodeHtml', () => {
