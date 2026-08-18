@@ -31,6 +31,7 @@ import {
   isPrintableUnicode,
   parseTextHtmlData,
   parseTextPlainData,
+  quoteTsvCell,
 } from '../utils/copyPasting'
 import {
   getCell,
@@ -670,7 +671,11 @@ export const DataSheetGrid = React.memo(
               }
             }
 
-            const textPlain = copyData.map((row) => row.join('\t')).join('\n')
+            const textPlain = copyData
+              .map((row) =>
+                row.map((cell) => quoteTsvCell(String(cell ?? ''))).join('\t')
+              )
+              .join('\n')
             const textHtml = `<table>${copyData
               .map(
                 (row) =>
@@ -1495,7 +1500,8 @@ export const DataSheetGrid = React.memo(
             !event.ctrlKey &&
             !event.metaKey &&
             !event.altKey &&
-            event.shiftKey
+            event.shiftKey &&
+            !editing
           ) {
             insertRowAfter(selection?.max.row || activeCell.row)
           } else if (

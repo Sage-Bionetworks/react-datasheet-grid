@@ -280,11 +280,7 @@ const TextComponent = React.memo<
             asyncRef.current.escPressed = true
           }
 
-          // A <textarea> would otherwise insert a literal newline — instead
-          // keep Enter's existing meaning (confirm the value, move to the
-          // next row). This only stops the browser's default action; the
-          // keydown still bubbles up to the grid's own handler.
-          if (e.key === 'Enter') {
+          if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
           }
         }}
