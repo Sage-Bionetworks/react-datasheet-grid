@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'vitest'
-import { clampMaxSize } from './textColumn'
+import { clampMaxSize, createTextColumn } from './textColumn'
 
 describe('clampMaxSize', () => {
   test('grows up to the configured max when there is plenty of viewport room', () => {
@@ -28,5 +28,25 @@ describe('clampMaxSize', () => {
 
   test('floors at 0 (never negative — an invalid CSS value) if there is no room at all', () => {
     expect(clampMaxSize(100, 700, 480, 700, 8)).toBe(0)
+  })
+})
+
+describe('createTextColumn defaults', () => {
+  const { pasteValue } = createTextColumn()
+
+  test('preserves an embedded newline in a pasted value instead of collapsing it to a space', () => {
+    // e.g. a multi-line cell copied from Excel/Google Sheets, whose <br>
+    // tags parseTextHtmlData already converts back to \n before this runs,
+    // or a multi-line cell (created via Shift+Enter) copied from this grid.
+    expect(
+      pasteValue({ value: 'line1\nline2', rowData: null, rowIndex: 0 })
+    ).toBe('line1\nline2')
+  })
+
+  test('still trims surrounding whitespace and treats an empty result as null', () => {
+    expect(pasteValue({ value: '  foo  ', rowData: null, rowIndex: 0 })).toBe(
+      'foo'
+    )
+    expect(pasteValue({ value: '   ', rowData: null, rowIndex: 0 })).toBe(null)
   })
 })

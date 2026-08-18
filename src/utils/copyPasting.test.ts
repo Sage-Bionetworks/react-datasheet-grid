@@ -158,6 +158,18 @@ describe('parsePlainTextData', () => {
     ])
   })
 
+  test('multi-row, multi-column paste with a multi-line cell mixed in among plain cells', () => {
+    // A multi-line cell's embedded newline must not be mistaken for a row
+    // break, and must not throw off the column alignment of the plain
+    // single-line cells surrounding it.
+    expect(
+      parseTextPlainData('foo\t"bar\nbaz"\nqux\tquux')
+    ).toEqual([
+      ['foo', 'bar\nbaz'],
+      ['qux', 'quux'],
+    ])
+  })
+
   test('quoted first cell', () => {
     expect(parseTextPlainData('"foo\nbar')).toEqual([['"foo'], ['bar']])
   })

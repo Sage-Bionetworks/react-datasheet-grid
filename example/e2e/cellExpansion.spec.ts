@@ -389,6 +389,89 @@ test.describe('cell expansion on focus', () => {
     )
   })
 
+  test('pasting a multi-line value preserves the newline instead of collapsing it to a space', async ({
+    page,
+  }) => {
+    // e.g. a multi-line cell copied from Excel/Google Sheets, whose HTML
+    // clipboard format represents the line break as <br> rather than \n.
+    const firstNameCell = getFirstNameCell(page)
+    await firstNameCell.click()
+
+    await page.evaluate(() => {
+      const dt = new DataTransfer()
+      dt.setData('text/html', '<table><tr><td>line1<br>line2</td></tr></table>')
+      dt.setData('text/plain', 'line1\nline2')
+      document.dispatchEvent(
+        new ClipboardEvent('paste', {
+          clipboardData: dt,
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    })
+
+    // Paste doesn't enter edit mode — the cell stays merely active, so its
+    // textarea is still portaled rather than back inside the cell (see the
+    // "clicking away" test above). Click elsewhere to settle it back to
+    // resting before reading its value through the normal DOM position.
+    await dataRows(page).first().locator('.dsg-cell').nth(3).click()
+
+    expect(await firstNameCell.locator('textarea').inputValue()).toBe(
+      'line1\nline2'
+    )
+  })
+
+  test('pasting a multi-cell block containing a multi-line cell keeps every cell aligned', async ({
+    page,
+  }) => {
+    // A 2x2 paste (First name, Last name) x 2 rows, where some cells are
+    // multi-line and some are plain single-line — the embedded newlines
+    // must not be mistaken for row breaks, and must not throw off which
+    // value lands in which cell.
+    const firstNameCell = getFirstNameCell(page)
+    await firstNameCell.click()
+
+    await page.evaluate(() => {
+      const dt = new DataTransfer()
+      dt.setData(
+        'text/html',
+        '<table>' +
+          '<tr><td>Alice</td><td>Multi<br>Line</td></tr>' +
+          '<tr><td>Bob<br>Smith</td><td>Jones</td></tr>' +
+          '</table>'
+      )
+      dt.setData('text/plain', 'Alice\tMulti\nLine\nBob\nSmith\tJones')
+      document.dispatchEvent(
+        new ClipboardEvent('paste', {
+          clipboardData: dt,
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    })
+
+    // Paste doesn't enter edit mode, so the pasted cells' textareas stay
+    // portaled unless the cell is deactivated first — click elsewhere to
+    // settle everything back to resting before reading via cell locators.
+    await dataRows(page).nth(2).locator('.dsg-cell').nth(2).click()
+
+    const lastNameCell = (rowIndex: number) =>
+      dataRows(page).nth(rowIndex).locator('.dsg-cell').nth(3)
+
+    expect(
+      await getFirstNameCell(page, 0).locator('textarea').inputValue()
+    ).toBe('Alice')
+    expect(await lastNameCell(0).locator('textarea').inputValue()).toBe(
+      'Multi\nLine'
+    )
+    expect(
+      await getFirstNameCell(page, 1).locator('textarea').inputValue()
+    ).toBe('Bob\nSmith')
+    expect(await lastNameCell(1).locator('textarea').inputValue()).toBe(
+      'Jones'
+    )
+  })
+
   test.describe('wrapping (grow wide, then wrap and grow tall)', () => {
     test('a long value grows wide up to the max-width cap, then wraps and grows taller', async ({
       page,

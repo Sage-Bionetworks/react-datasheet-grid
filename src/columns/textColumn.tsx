@@ -327,8 +327,13 @@ export function createTextColumn<T = string | null>({
   formatBlurredInput = (value) => String(value ?? ''),
   formatInputOnFocus = (value) => String(value ?? ''),
   formatForCopy = (value) => String(value ?? ''),
-  parsePastedValue = (value) =>
-    (value.replace(/[\n\r]+/g, ' ').trim() || (null as unknown)) as T,
+  // Matches parseUserInput's default rather than collapsing embedded
+  // newlines to a space: a pasted value can legitimately contain a
+  // newline (e.g. a multi-line cell copied from Excel/Google Sheets,
+  // whose HTML clipboard format already gets its <br> tags converted
+  // back to \n by parseTextHtmlData before this even runs), and text
+  // cells now genuinely support wrapping/displaying multi-line content.
+  parsePastedValue = (value) => (value.trim() || (null as unknown)) as T,
 }: TextColumnOptions<T> = {}): Partial<Column<T, TextColumnData<T>, string>> {
   return {
     component: TextComponent as unknown as CellComponent<T, TextColumnData<T>>,
