@@ -26,8 +26,8 @@ jobs:
         with:
           version: latest
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install -P --frozen-lockfile
       - run: pnpm run build
-      - run: pnpm publish -P --tag next --no-git-checks
+      - run: pnpm publish --tag next --no-git-checks
         env:
             NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
