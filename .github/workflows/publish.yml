@@ -21,11 +21,12 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-          
+
       - uses: pnpm/action-setup@v4
         with:
           version: latest
-          
+
+      - run: pnpm approve-builds core-js esbuild
       - run: pnpm install --frozen-lockfile --ignore-scripts=false
       - run: pnpm run build
       - run: pnpm publish --tag next --no-git-checks
