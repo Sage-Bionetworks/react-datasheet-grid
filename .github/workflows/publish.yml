@@ -26,7 +26,7 @@ jobs:
         with:
           version: latest
           
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts=false
       - run: pnpm run build
       - run: pnpm publish --tag next --no-git-checks
         env:
