@@ -26,7 +26,7 @@ jobs:
         with:
           version: latest
 
-      - run: pnpm approve-builds --all -g
+      - run: pnpm approve-builds --all
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - run: pnpm publish --tag next --no-git-checks
