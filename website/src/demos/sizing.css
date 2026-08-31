@@ -1,8 +1,0 @@
-.preventCodeScroll pre {
-  overflow: hidden;
-}
-
-.preventCodeScroll > div {
-  margin: 0;
-  box-shadow: none;
-}
