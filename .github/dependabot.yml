@@ -5,9 +5,36 @@ updates:
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: 'daily'
-  # Maintain dependencies from npm
+      interval: 'weekly'
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  # Maintain dependencies for the published package
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
-      interval: 'daily'
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    groups:
+      # Runtime deps ship to consumers, so keep them in their own PR.
+      production:
+        dependency-type: 'production'
+        patterns:
+          - '*'
+      dev-dependencies:
+        dependency-type: 'development'
+        patterns:
+          - '*'
+
+  # Maintain dependencies for the example app (dev/build only, never published)
+  - package-ecosystem: 'npm'
+    directory: '/example'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 3
+    groups:
+      example:
+        patterns:
+          - '*'
